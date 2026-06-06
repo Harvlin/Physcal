@@ -85,6 +85,11 @@ export type Exercise = {
   rest: number;
   tip: string;
   instructions: string;
+  // Optional weight & pose fields
+  defaultWeight?: number;    // kg, undefined = bodyweight
+  weightUnit?: "kg" | "lbs";
+  supportsRepCount?: boolean; // can MediaPipe/voice count this exercise?
+  poseType?: "squat" | "pushup" | "lunge" | "bridge"; // for pose detection
 };
 
 export type Workout = {
@@ -112,6 +117,10 @@ export const todayWorkout: Workout = {
       tip: "Keep your chest tall and weight in your heels.",
       instructions:
         "Hold a weight at chest level. Lower hips back and down, keeping knees tracking over toes.",
+      defaultWeight: 8,
+      weightUnit: "kg",
+      supportsRepCount: true,
+      poseType: "squat",
     },
     {
       id: "e2",
@@ -122,6 +131,9 @@ export const todayWorkout: Workout = {
       tip: "Squeeze glutes at the top, don't arch your back.",
       instructions:
         "Lie on back, knees bent. Drive through heels and lift hips until body forms a straight line.",
+      defaultWeight: undefined,
+      supportsRepCount: true,
+      poseType: "bridge",
     },
     {
       id: "e3",
@@ -132,6 +144,9 @@ export const todayWorkout: Workout = {
       tip: "Step long enough that your front knee stays over your ankle.",
       instructions:
         "Step one foot back, lower until both knees bend ~90°, drive front heel to return.",
+      defaultWeight: undefined,
+      supportsRepCount: true,
+      poseType: "lunge",
     },
     {
       id: "e4",
@@ -141,6 +156,8 @@ export const todayWorkout: Workout = {
       rest: 30,
       tip: "Pause briefly at the top of each rep.",
       instructions: "Stand tall, rise onto balls of feet, lower under control.",
+      defaultWeight: undefined,
+      supportsRepCount: false,
     },
     {
       id: "e5",
@@ -150,6 +167,8 @@ export const todayWorkout: Workout = {
       rest: 45,
       tip: "Reps are seconds — keep hips level.",
       instructions: "Forearms down, body straight from heels to head, brace the core.",
+      defaultWeight: undefined,
+      supportsRepCount: false,
     },
   ],
 };
@@ -480,3 +499,74 @@ export const nudgeHistory: (Nudge & { actedOn: boolean })[] = [
     actedOn: false,
   },
 ];
+
+// ─── Weight History ───────────────────────────────────────────────
+
+export type WeightEntry = {
+  date: string;
+  weight: number;
+  completedReps: number;
+  completedSets: number;
+};
+
+export type ExerciseWeightHistory = {
+  exerciseId: string;
+  exerciseName: string;
+  unit: "kg" | "lbs";
+  entries: WeightEntry[];
+};
+
+export const weightHistory: ExerciseWeightHistory[] = [
+  {
+    exerciseId: "e1",
+    exerciseName: "Goblet Squat",
+    unit: "kg",
+    entries: [
+      { date: "2025-05-08", weight: 6, completedReps: 12, completedSets: 3 },
+      { date: "2025-05-11", weight: 6, completedReps: 12, completedSets: 3 },
+      { date: "2025-05-13", weight: 8, completedReps: 12, completedSets: 3 },
+    ],
+  },
+];
+
+// ─── Recovery Workout (for Injury Pause mode) ────────────────────
+
+export const recoveryWorkout: Workout = {
+  id: "w_recovery",
+  title: "Gentle Recovery",
+  duration: 15,
+  difficulty: "Adjusted",
+  adapted: true,
+  exercises: [
+    {
+      id: "r1",
+      name: "Cat-Cow Stretch",
+      sets: 2,
+      reps: 10,
+      rest: 20,
+      tip: "Move slowly, breathe with each transition.",
+      instructions: "On hands and knees, alternate between arching and rounding your spine.",
+      supportsRepCount: false,
+    },
+    {
+      id: "r2",
+      name: "90/90 Hip Stretch",
+      sets: 2,
+      reps: 45,
+      rest: 20,
+      tip: "Reps are seconds per side.",
+      instructions: "Sit with both legs at 90° angles, hold each side.",
+      supportsRepCount: false,
+    },
+    {
+      id: "r3",
+      name: "Child's Pose",
+      sets: 1,
+      reps: 60,
+      rest: 0,
+      tip: "Breathe into your lower back.",
+      instructions: "Kneel, sit hips to heels, arms extended forward or alongside body.",
+      supportsRepCount: false,
+    },
+  ],
+};

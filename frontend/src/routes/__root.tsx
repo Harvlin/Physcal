@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -140,6 +141,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const theme = useApp((s) => s.theme);
   const setTheme = useApp((s) => s.setTheme);
+  const routerState = useRouterState();
 
   useEffect(() => {
     setTheme(theme);

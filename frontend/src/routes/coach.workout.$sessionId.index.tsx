@@ -1,297 +1,471 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Minus, Plus, Check } from "lucide-react";
-import { todayWorkout, motivationalCues } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import {
+  ArrowLeft, Check, ChevronDown, ChevronUp, Camera, Zap,
+  AlertTriangle, Clock, Dumbbell, Flame,
+} from "lucide-react";
+import { todayWorkout, recoveryWorkout, weightHistory, motivationalCues, type Exercise } from "@/lib/mock-data";
+import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
+import { RestTimerOverlay } from "@/components/RestTimerOverlay";
+import { RepCounter } from "@/components/RepCounter";
+import { WeightSelector } from "@/components/WeightSelector";
+import { InjuryPauseSheet } from "@/components/InjuryPauseSheet";
 
 export const Route = createFileRoute("/coach/workout/$sessionId/")({
   component: WorkoutSession,
 });
 
-type Phase = "warmup" | "exercise" | "rest" | "done";
+function getSuggestedWeight(exerciseId: string): number | undefined {
+  const history = weightHistory.find((w) => w.exerciseId === exerciseId);
+  if (!history || history.entries.length === 0) return undefined;
+  const last = history.entries[history.entries.length - 1];
+  const exercise = todayWorkout.exercises.find((e) => e.id === exerciseId);
+  if (!exercise) return last.weight;
+  const completedAll = last.completedSets >= exercise.sets && last.completedReps >= exercise.reps;
+  if (completedAll) return last.weight + (last.weight >= 15 ? 1 : 0.5);
+  return last.weight;
+}
+
+function useElapsedTime(startedAt: string | null) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!startedAt) return;
+    const start = new Date(startedAt).getTime();
+    const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 function WorkoutSession() {
   const { sessionId } = Route.useParams();
   const navigate = useNavigate();
-  const [phase, setPhase] = useState<Phase>("warmup");
-  const [exIdx, setExIdx] = useState(0);
-  const [setIdx, setSetIdx] = useState(0);
-  const [reps, setReps] = useState(0);
-  const [restSec, setRestSec] = useState(60);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [setComplete, setSetComplete] = useState(false);
-  const [cueIdx, setCueIdx] = useState(0);
-  const restTimer = useRef<number | null>(null);
-  const ex = todayWorkout.exercises[exIdx];
   const c = useColors();
 
-  useEffect(() => {
-    if (ex) setReps(ex.reps);
-  }, [exIdx]);
+  const initWorkoutSession = useApp((s) => s.initWorkoutSession);
+  const completeSetAction = useApp((s) => s.completeSet);
+  const setRestTimer = useApp((s) => s.setRestTimer);
+  const setUsedWeight = useApp((s) => s.setUsedWeight);
+  const setLiveRepCount = useApp((s) => s.setLiveRepCount);
+  const session = useApp((s) => s.workoutSession);
+  const elapsedTime = useElapsedTime(session.sessionStartedAt);
 
-  useEffect(() => {
-    if (phase !== "rest") return;
-    setRestSec(ex.rest);
-    setCueIdx(Math.floor(Math.random() * motivationalCues.length));
-    restTimer.current = window.setInterval(() => {
-      setRestSec((s) => {
-        if (s <= 1) {
-          window.clearInterval(restTimer.current!);
-          if ("vibrate" in navigator) navigator.vibrate(20);
-          advanceAfterRest();
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => {
-      if (restTimer.current) window.clearInterval(restTimer.current);
-    };
-  }, [phase]);
+  const [phase, setPhase] = useState<"warmup" | "active">("warmup");
+  const [showRepCounter, setShowRepCounter] = useState(false);
+  const [tipExpanded, setTipExpanded] = useState(false);
+  const [setDoneFlash, setSetDoneFlash] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  const advanceAfterRest = () => {
-    if (setIdx + 1 < ex.sets) {
-      setSetIdx((i) => i + 1);
-      setPhase("exercise");
-    } else if (exIdx + 1 < todayWorkout.exercises.length) {
-      setSetComplete(true);
-      setTimeout(() => {
-        setSetComplete(false);
-        setExIdx((i) => i + 1);
-        setSetIdx(0);
-        setPhase("exercise");
-      }, 1100);
-    } else {
-      navigate({ to: "/coach/workout/$sessionId/done", params: { sessionId } });
+  const exercises = isRecoveryMode ? recoveryWorkout.exercises : todayWorkout.exercises;
+  const workoutTitle = isRecoveryMode ? recoveryWorkout.title : todayWorkout.title;
+
+  // Init session on mount
+  useEffect(() => { initWorkoutSession(sessionId); }, [sessionId]);
+
+  // Wake lock
+  useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+    navigator.wakeLock?.request("screen").then((wl) => { wakeLock = wl; }).catch(() => {});
+    return () => { wakeLock?.release(); };
+  }, []);
+
+  // Active exercise detection
+  const activeExerciseIdx = exercises.findIndex(
+    (ex) => (session.completedSets[ex.id] ?? 0) < ex.sets
+  );
+  const activeExercise = exercises[activeExerciseIdx] ?? null;
+  const isWorkoutComplete = phase === "active" && activeExerciseIdx === -1;
+
+  // Navigate to done on completion
+  useEffect(() => {
+    if (isWorkoutComplete) {
+      const t = setTimeout(() => {
+        navigate({ to: "/coach/workout/$sessionId/done", params: { sessionId } });
+      }, 1500);
+      return () => clearTimeout(t);
     }
+  }, [isWorkoutComplete]);
+
+  // Totals
+  const totalSets = exercises.reduce((a, e) => a + e.sets, 0);
+  const completedTotalSets = Object.values(session.completedSets).reduce((a, b) => a + b, 0);
+  const completedExercises = exercises.filter(
+    (ex) => (session.completedSets[ex.id] ?? 0) >= ex.sets
+  ).length;
+
+  const currentSetNum = activeExercise ? (session.completedSets[activeExercise.id] ?? 0) + 1 : 0;
+  const currentWeight = activeExercise ? session.usedWeights[activeExercise.id] : undefined;
+
+  // Next set/exercise info for rest overlay
+  const nextSetInfo = useMemo(() => {
+    if (!activeExercise) return undefined;
+    const setsCompleted = session.completedSets[activeExercise.id] ?? 0;
+    if (setsCompleted === 0) return undefined;
+    return `${activeExercise.name} — set ${setsCompleted + 1}`;
+  }, [activeExercise, session.completedSets]);
+
+  const nextExerciseForRest = useMemo(() => {
+    if (!activeExercise) return null;
+    const setsCompleted = session.completedSets[activeExercise.id] ?? 0;
+    if (setsCompleted === 0) return activeExercise;
+    return null;
+  }, [activeExercise, session.completedSets]);
+
+  // Motivational cue per exercise
+  const cue = motivationalCues[activeExerciseIdx % motivationalCues.length];
+
+  const handleCompleteSet = () => {
+    if (!activeExercise) return;
+    const reps = session.liveRepCount || activeExercise.reps;
+    const weight = currentWeight ?? activeExercise.defaultWeight;
+    completeSetAction(activeExercise.id, reps, weight);
+    if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+    setSetDoneFlash(true);
+    setTimeout(() => setSetDoneFlash(false), 500);
+    if (activeExercise.rest > 0) setRestTimer(activeExercise.rest);
+    setTipExpanded(false);
   };
 
-  const completeSet = () => {
-    if ("vibrate" in navigator) navigator.vibrate(15);
-    setPhase("rest");
+  const handleRepCounterComplete = (reps: number) => {
+    setLiveRepCount(reps);
+    setShowRepCounter(false);
   };
+
+  // ─── Warmup ───
+  if (phase === "warmup") {
+    return (
+      <div className="min-h-dvh flex flex-col" style={{ color: c.textPrimary }}>
+        <div className="flex-1 flex flex-col justify-center text-center px-5 max-w-md mx-auto w-full">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <div className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: c.violet }}>Get ready</div>
+            <h1 className="text-4xl font-extrabold mb-2">{workoutTitle}</h1>
+            <p className="font-medium mb-8" style={{ color: c.textSecondary }}>
+              {(isRecoveryMode ? recoveryWorkout : todayWorkout).duration} min · {exercises.length} exercises
+            </p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+            className="card-frosted p-5 text-left space-y-1 max-h-[40vh] overflow-y-auto"
+          >
+            {exercises.map((e, i) => (
+              <div key={e.id} className="flex items-center gap-4 py-2.5" style={{ borderBottom: i < exercises.length - 1 ? `1px solid ${c.divider}` : "none" }}>
+                <span className="w-8 h-8 rounded-full grid place-items-center text-sm font-extrabold tabular-nums shrink-0" style={{ background: c.exuberantBg, color: c.exuberant }}>
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-sm">{e.name}</div>
+                  <div className="text-xs font-medium mt-0.5" style={{ color: c.textTertiary }}>
+                    {e.sets}×{e.reps} {e.defaultWeight ? `· ${e.defaultWeight} ${e.weightUnit || "kg"}` : ""}
+                  </div>
+                </div>
+                <div className="text-xs font-semibold tabular-nums" style={{ color: c.textTertiary }}>{e.rest}s</div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+          className="space-y-3 max-w-md mx-auto w-full px-5 pb-8"
+        >
+          <button onClick={() => setPhase("active")} className="w-full h-14 rounded-full font-bold text-[15px] hover:opacity-90 active:scale-[0.98] transition-all"
+            style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 28px ${c.sunGlareBg}` }}
+          >
+            Start workout
+          </button>
+          <Link to="/coach" className="block text-center text-sm font-semibold py-2" style={{ color: c.textTertiary }}>Not today</Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Completion animation ───
+  if (isWorkoutComplete) {
+    return (
+      <div className="min-h-dvh grid place-items-center" style={{ color: c.textPrimary }}>
+        <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }} className="text-center"
+        >
+          <div className="w-28 h-28 rounded-full grid place-items-center mx-auto mb-5" style={{ background: c.sunGlare, boxShadow: `0 0 60px ${c.sunGlareBg}` }}>
+            <Check size={56} strokeWidth={3} style={{ color: "#1C1C1A" }} />
+          </div>
+          <div className="text-2xl font-extrabold mb-1">Workout Complete!</div>
+          <div className="text-sm font-medium" style={{ color: c.textSecondary }}>{elapsedTime} total</div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!activeExercise) return null;
+
+  const setsCompleted = session.completedSets[activeExercise.id] ?? 0;
 
   return (
-    <div className="min-h-dvh flex flex-col text-[var(--foreground)]">
-      {/* Top bar */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2 mb-3">
-          {todayWorkout.exercises.map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: c.divider }}>
-              <div
-                className={cn(
-                  "h-full transition-all",
-                  i < exIdx ? "w-full" : i === exIdx ? "w-1/2" : "w-0",
-                )}
-                style={{ background: i <= exIdx ? c.sunGlare : "transparent", boxShadow: i === exIdx ? `0 0 6px ${c.sunGlareBg}` : "none" }}
-              />
-            </div>
-          ))}
+    <div className="min-h-dvh flex flex-col" style={{ color: c.textPrimary }}>
+      {/* Recovery banner */}
+      {isRecoveryMode && (
+        <div className="px-4 py-2.5 text-center text-sm font-bold flex items-center justify-center gap-2"
+          style={{ background: "oklch(0.70 0.14 65 / 0.12)", color: "oklch(0.70 0.14 65)" }}
+        >
+          <AlertTriangle size={14} /> Recovery mode — gentle movement only
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold tabular" style={{ color: c.textTertiary }}>
-            Exercise {exIdx + 1} of {todayWorkout.exercises.length}
-          </span>
-          <button
-            onClick={() => setShowExitConfirm(true)}
-            className="w-9 h-9 grid place-items-center rounded-xl transition-colors"
-            style={{ color: c.textTertiary }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            aria-label="Exit"
-          >
-            <X size={18} />
+      )}
+
+      {/* ─── Top bar ─── */}
+      <div className="px-4 pt-4 pb-1">
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={() => setShowExitConfirm(true)} className="w-10 h-10 rounded-full grid place-items-center -ml-1" style={{ color: c.textTertiary }}>
+            <ArrowLeft size={20} />
           </button>
+          <div className="text-center flex-1 mx-2">
+            <div className="text-[13px] font-bold leading-tight" style={{ color: c.textPrimary }}>{workoutTitle}</div>
+          </div>
+          <div className="flex items-center gap-1 text-xs font-bold tabular-nums" style={{ color: c.textTertiary }}>
+            <Clock size={12} /> {elapsedTime}
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 rounded-full overflow-hidden" style={{ background: c.divider }}>
+          <motion.div className="h-full rounded-full" style={{ background: c.sunGlare }}
+            animate={{ width: `${totalSets > 0 ? (completedTotalSets / totalSets) * 100 : 0}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-1.5 px-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textTertiary }}>
+            Exercise {activeExerciseIdx + 1}/{exercises.length}
+          </span>
+          <span className="text-[10px] font-bold tabular-nums" style={{ color: c.textTertiary }}>
+            {completedTotalSets}/{totalSets} sets
+          </span>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col px-5 pb-8">
+      {/* ─── Main content ─── */}
+      <div className="flex-1 px-4 pt-2 pb-1 flex flex-col min-h-0">
         <AnimatePresence mode="wait">
-          {phase === "warmup" && (
-            <motion.div
-              key="warmup"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex-1 flex flex-col"
-            >
-              <div className="flex-1 flex flex-col justify-center text-center max-w-md mx-auto">
-                <div className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: c.violet }}>Get ready</div>
-                <h1 className="text-4xl font-black mb-2" style={{ color: c.textPrimary }}>{todayWorkout.title}</h1>
-                <p className="font-medium mb-8" style={{ color: c.textSecondary }}>
-                  {todayWorkout.duration} min · {todayWorkout.exercises.length} exercises
-                </p>
-                <div className="card-frosted p-5 text-left space-y-3 max-h-[40vh] overflow-y-auto">
-                  {todayWorkout.exercises.map((e, i) => (
-                    <div key={e.id} className="flex items-center gap-4 py-1.5">
-                      <span
-                        className="w-8 h-8 rounded-full grid place-items-center text-sm font-black tabular"
-                        style={{ background: c.exuberantBg, color: c.exuberant }}
-                      >
-                        {i + 1}
-                      </span>
-                      <div className="flex-1">
-                        <div className="font-bold text-sm" style={{ color: c.textPrimary }}>{e.name}</div>
-                        <div className="text-xs font-medium mt-0.5" style={{ color: c.textTertiary }}>
-                          {e.sets} × {e.reps}
-                        </div>
-                      </div>
+          <motion.div
+            key={activeExercise.id + "-" + setsCompleted}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.25 }}
+            className="card-frosted p-5 flex-1 flex flex-col"
+          >
+            {/* Exercise header */}
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="text-[26px] font-extrabold leading-tight pr-2">{activeExercise.name}</h2>
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 mt-1"
+                style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33` }}
+              >
+                SET {currentSetNum}/{activeExercise.sets}
+              </span>
+            </div>
+
+            {/* Subtitle */}
+            <div className="flex items-center gap-3 mb-4 text-[13px] font-semibold" style={{ color: c.textTertiary }}>
+              <span className="flex items-center gap-1"><Dumbbell size={12} /> {activeExercise.reps} reps</span>
+              <span>·</span>
+              <span className="flex items-center gap-1"><Clock size={12} /> {activeExercise.rest}s rest</span>
+              {activeExercise.defaultWeight !== undefined && (
+                <><span>·</span><span className="flex items-center gap-1"><Flame size={12} /> Weighted</span></>
+              )}
+            </div>
+
+            {/* Set progress — visual bar */}
+            <div className="flex items-center gap-1.5 mb-5">
+              {Array.from({ length: activeExercise.sets }).map((_, i) => {
+                const done = setsCompleted > i;
+                const current = setsCompleted === i;
+                return (
+                  <div key={i} className="flex-1 relative">
+                    <div className="h-2 rounded-full" style={{
+                      background: done ? "oklch(0.52 0.14 152)" : c.chipBg,
+                      border: current ? `1.5px solid ${c.sunGlare}` : `1px solid ${done ? "transparent" : c.chipBorder}`,
+                      boxShadow: done ? "0 0 8px oklch(0.52 0.14 152 / 0.3)" : current ? `0 0 8px ${c.sunGlareBg}` : "none",
+                    }}>
+                      {current && (
+                        <motion.div className="h-full rounded-full" style={{ background: `${c.sunGlare}44` }}
+                          animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
+                        />
+                      )}
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Weight selector */}
+            {activeExercise.defaultWeight !== undefined && (
+              <div className="mb-4">
+                <WeightSelector
+                  exercise={activeExercise}
+                  currentWeight={currentWeight}
+                  suggestedWeight={getSuggestedWeight(activeExercise.id)}
+                  onWeightChange={(w) => setUsedWeight(activeExercise.id, w)}
+                />
+              </div>
+            )}
+
+            {/* Tip (collapsible) */}
+            <button onClick={() => setTipExpanded(!tipExpanded)}
+              className="flex items-center gap-2 text-sm font-semibold py-2 w-full text-left"
+              style={{ color: c.textSecondary }}
+            >
+              💡 Form tip {tipExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            <AnimatePresence>
+              {tipExpanded && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-xl p-3.5 mb-2" style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}` }}>
+                    <p className="text-sm font-semibold mb-1.5" style={{ color: c.sunGlare }}>{activeExercise.tip}</p>
+                    <p className="text-xs font-medium leading-relaxed" style={{ color: c.textTertiary }}>{activeExercise.instructions}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Spacer */}
+            <div className="flex-1 min-h-4" />
+
+            {/* Rep counter & motivational cue */}
+            <div className="space-y-3">
+              {/* Motivational cue */}
+              <p className="text-center text-[13px] italic font-medium" style={{ color: c.textTertiary }}>
+                "{cue}"
+              </p>
+
+              {/* Rep counter */}
+              {activeExercise.supportsRepCount && !isRecoveryMode && (
+                <div>
+                  {session.liveRepCount > 0 ? (
+                    <button onClick={() => setShowRepCounter(true)}
+                      className="w-full rounded-xl p-3 flex items-center gap-3 transition-all active:scale-[0.98]"
+                      style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}` }}
+                    >
+                      <div className="w-12 h-12 rounded-full grid place-items-center font-extrabold text-lg"
+                        style={{ background: session.liveRepCount >= activeExercise.reps ? "oklch(0.52 0.14 152 / 0.15)" : c.sunGlareBg,
+                          color: session.liveRepCount >= activeExercise.reps ? "oklch(0.52 0.14 152)" : c.sunGlare }}
+                      >
+                        {session.liveRepCount}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-bold" style={{ color: c.textPrimary }}>
+                          {session.liveRepCount}/{activeExercise.reps} reps counted
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: c.textTertiary }}>Tap to continue counting</div>
+                      </div>
+                    </button>
+                  ) : (
+                    <button onClick={() => setShowRepCounter(true)}
+                      className="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all active:scale-[0.98]"
+                      style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, color: c.sunGlare }}
+                    >
+                      <Camera size={16} /> Count my reps
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Exercise queue */}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-2.5 -mx-0.5 px-0.5">
+          {exercises.map((ex) => {
+            const done = (session.completedSets[ex.id] ?? 0) >= ex.sets;
+            const active = ex.id === activeExercise.id;
+            const exSets = session.completedSets[ex.id] ?? 0;
+            return (
+              <div key={ex.id} className="shrink-0 rounded-xl py-2 px-3 text-center" style={{
+                minWidth: 72,
+                background: active ? c.chipBg : "transparent",
+                border: `1px solid ${active ? c.chipBorder : "transparent"}`,
+              }}>
+                <div className="text-[11px] font-bold leading-tight mb-1" style={{
+                  color: done ? "oklch(0.52 0.14 152)" : active ? c.textPrimary : c.textTertiary,
+                }}>
+                  {/* Show abbreviated name — first word only for long names */}
+                  {ex.name.split(" ").length > 1 ? ex.name.split(" ")[0] : ex.name}
+                </div>
+                <div className="flex justify-center gap-0.5">
+                  {Array.from({ length: ex.sets }).map((_, si) => (
+                    <div key={si} className="w-1.5 h-1.5 rounded-full" style={{
+                      background: exSets > si ? "oklch(0.52 0.14 152)" : active && si === exSets ? c.sunGlare : c.divider,
+                    }} />
                   ))}
                 </div>
               </div>
-              <div className="space-y-3 max-w-md mx-auto w-full">
-                <button
-                  onClick={() => setPhase("exercise")}
-                  className="w-full h-[52px] rounded-full font-bold hover:opacity-90 active:scale-[0.98] transition-all"
-                  style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 28px ${c.sunGlareBg}` }}
-                >
-                  Start workout
-                </button>
-                <Link
-                  to="/coach"
-                  className="block text-center text-sm font-semibold hover:opacity-100 transition-opacity"
-                  style={{ color: c.textTertiary }}
-                >
-                  Not today
-                </Link>
-              </div>
-            </motion.div>
-          )}
-
-          {phase === "exercise" && !setComplete && (
-            <motion.div
-              key={`ex-${exIdx}-${setIdx}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex-1 flex flex-col"
-            >
-              <div className="flex-1 flex flex-col justify-center items-center text-center">
-                <div className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: c.violet }}>
-                  Set {setIdx + 1} of {ex.sets}
-                </div>
-                <h2 className="text-5xl font-black mb-3" style={{ color: c.textPrimary }}>{ex.name}</h2>
-                <div className="font-medium mb-8 tabular" style={{ color: c.textSecondary }}>
-                  {ex.sets} sets × {ex.reps} reps
-                </div>
-
-                <ExerciseIllustration c={c} />
-
-                <p className="italic text-sm max-w-xs mt-8 font-medium" style={{ color: c.textTertiary }}>{ex.tip}</p>
-              </div>
-              <div className="max-w-md mx-auto w-full space-y-3">
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => setReps(Math.max(1, reps - 1))}
-                    className="w-12 h-12 rounded-full grid place-items-center active:scale-90 transition-all"
-                    style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textSecondary }}
-                    aria-label="Less reps"
-                  >
-                    <Minus size={18} strokeWidth={2.5} />
-                  </button>
-                  <div className="text-[40px] font-black tabular w-20 text-center tracking-tight" style={{ color: c.textPrimary }}>{reps}</div>
-                  <button
-                    onClick={() => setReps(reps + 1)}
-                    className="w-12 h-12 rounded-full grid place-items-center active:scale-90 transition-all"
-                    style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textSecondary }}
-                    aria-label="More reps"
-                  >
-                    <Plus size={18} strokeWidth={2.5} />
-                  </button>
-                </div>
-                <button
-                  onClick={completeSet}
-                  className="w-full h-[52px] rounded-full font-bold hover:opacity-90 active:scale-[0.98] transition-all"
-                  style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 28px ${c.sunGlareBg}` }}
-                >
-                  Done — Start rest
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {phase === "exercise" && setComplete && (
-            <motion.div
-              key="setdone"
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="flex-1 grid place-items-center"
-            >
-              <div
-                className="w-24 h-24 rounded-full shadow-xl grid place-items-center"
-                style={{ background: c.exuberant, boxShadow: `0 0 40px ${c.exuberantBg}` }}
-              >
-                <Check size={48} strokeWidth={3.5} style={{ color: "#F2F0E9" }} />
-              </div>
-            </motion.div>
-          )}
-
-          {phase === "rest" && (
-            <motion.div
-              key="rest"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex-1 flex flex-col items-center justify-center text-center px-4"
-            >
-              <div className="text-xs uppercase tracking-widest font-bold mb-6" style={{ color: c.textTertiary }}>Rest</div>
-              <RestRing seconds={restSec} total={ex.rest} c={c} />
-              <div className="mt-8">
-                <div className="text-xs uppercase tracking-wider font-bold mb-1" style={{ color: c.textTertiary }}>Next up</div>
-                <div className="font-black text-[22px]" style={{ color: c.textPrimary }}>
-                  {setIdx + 1 < ex.sets
-                    ? `${ex.name} — set ${setIdx + 2}`
-                    : todayWorkout.exercises[exIdx + 1]?.name || "Finish"}
-                </div>
-              </div>
-              <p className="italic text-sm mt-8 font-medium max-w-xs" style={{ color: c.textSecondary }}>{motivationalCues[cueIdx]}</p>
-              <button
-                onClick={() => {
-                  if (restTimer.current) window.clearInterval(restTimer.current);
-                  advanceAfterRest();
-                }}
-                className="mt-8 text-sm font-bold hover:opacity-100 underline underline-offset-4"
-                style={{ color: c.textTertiary }}
-              >
-                Skip rest
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            );
+          })}
+        </div>
       </div>
 
+      {/* ─── Sticky bottom ─── */}
+      <div className="px-4 pb-5 pt-1">
+        <div className="flex items-center gap-2.5">
+          <motion.button
+            onClick={handleCompleteSet}
+            animate={setDoneFlash ? { scale: [1, 1.03, 1] } : {}}
+            transition={{ duration: 0.3 }}
+            className="flex-1 h-14 rounded-full font-bold text-[15px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            style={{
+              background: setDoneFlash ? "oklch(0.52 0.14 152)" : c.sunGlare,
+              color: "#1C1C1A",
+              boxShadow: setDoneFlash ? "0 0 30px oklch(0.52 0.14 152 / 0.4)" : `0 0 24px ${c.sunGlareBg}`,
+            }}
+          >
+            <Check size={18} strokeWidth={3} />
+            {setDoneFlash ? "Set done! ✓" : `Complete set ${currentSetNum}`}
+          </motion.button>
+          <InjuryPauseSheet sessionId={sessionId} onSwitchToRecovery={() => setIsRecoveryMode(true)}>
+            <button className="h-14 w-14 rounded-full grid place-items-center transition-all active:scale-90 shrink-0"
+              style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}
+              aria-label="Take a break"
+            >
+              <Zap size={18} />
+            </button>
+          </InjuryPauseSheet>
+        </div>
+      </div>
+
+      {/* Overlays */}
+      <RestTimerOverlay nextExercise={nextExerciseForRest} nextSetInfo={nextSetInfo} />
+      {showRepCounter && activeExercise && (
+        <RepCounter exercise={activeExercise} targetReps={activeExercise.reps} onComplete={handleRepCounterComplete} onClose={() => setShowRepCounter(false)} />
+      )}
+
+      {/* Exit confirm */}
       <AnimatePresence>
         {showExitConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 z-50 grid place-items-center px-5"
           >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
+            <motion.div initial={{ scale: 0.95, y: 8 }} animate={{ scale: 1, y: 0 }}
               className="card-frosted p-6 max-w-sm w-full"
-              style={{ borderColor: c.divider }}
             >
-              <h3 className="font-black text-lg mb-2" style={{ color: c.textPrimary }}>Exit workout?</h3>
-              <p className="text-sm font-medium mb-5" style={{ color: c.textSecondary }}>Your progress so far won't be saved.</p>
+              <h3 className="font-extrabold text-lg mb-1.5">Exit workout?</h3>
+              <p className="text-sm font-medium mb-5" style={{ color: c.textSecondary }}>
+                You've completed {completedTotalSets} sets so far. Your progress will be saved.
+              </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowExitConfirm(false)}
-                  className="flex-1 h-12 rounded-full font-bold text-sm transition-all"
+                <button onClick={() => setShowExitConfirm(false)}
+                  className="flex-1 h-12 rounded-full font-bold text-sm transition-all active:scale-95"
                   style={{ border: `1px solid ${c.chipBorder}`, color: c.textSecondary }}
-                  onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
                   Keep going
                 </button>
-                <Link
-                  to="/coach"
-                  className="flex-1 h-12 rounded-full font-bold text-sm grid place-items-center hover:opacity-90 transition-all"
-                  style={{ background: c.exuberant, color: "#F2F0E9", boxShadow: `0 4px 16px ${c.exuberantBg}` }}
+                <Link to="/coach/workout/$sessionId/done" params={{ sessionId }}
+                  className="flex-1 h-12 rounded-full font-bold text-sm grid place-items-center transition-all active:scale-95"
+                  style={{ background: c.exuberant, color: "#F2F0E9" }}
                 >
-                  Exit
+                  Exit & save
                 </Link>
               </div>
             </motion.div>
@@ -299,41 +473,5 @@ function WorkoutSession() {
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function RestRing({ seconds, total, c }: { seconds: number; total: number; c: ReturnType<typeof useColors> }) {
-  const r = 90,
-    circ = 2 * Math.PI * r;
-  const offset = circ - (seconds / total) * circ;
-  return (
-    <div className="relative w-[220px] h-[220px] grid place-items-center">
-      <svg className="-rotate-90 absolute inset-0" viewBox="0 0 220 220">
-        <circle cx={110} cy={110} r={r} stroke={c.divider} strokeWidth={8} fill="none" />
-        <circle
-          cx={110} cy={110} r={r}
-          stroke={c.violet}
-          strokeWidth={8} fill="none" strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 1s linear", filter: `drop-shadow(0 0 8px ${c.violetBg})` }}
-        />
-      </svg>
-      <div className="text-[64px] font-black tabular tracking-tighter" style={{ color: c.textPrimary }}>{seconds}</div>
-    </div>
-  );
-}
-
-function ExerciseIllustration({ c }: { c: ReturnType<typeof useColors> }) {
-  return (
-    <svg width="180" height="180" viewBox="0 0 180 180" aria-hidden>
-      <circle cx="90" cy="90" r="84" fill={c.violetBg} opacity="0.3" stroke={c.violetBg} strokeWidth="1" />
-      <circle cx="90" cy="55" r="14" fill={c.violetBg} opacity="0.8" />
-      <rect x="76" y="70" width="28" height="40" rx="8" fill={c.violetBg} opacity="0.6" />
-      <rect x="68" y="105" width="14" height="40" rx="6" fill={c.violetBg} opacity="0.5" transform="rotate(-8 75 125)" />
-      <rect x="98" y="105" width="14" height="40" rx="6" fill={c.violetBg} opacity="0.5" transform="rotate(8 105 125)" />
-      {/* Accent circles */}
-      <circle cx="90" cy="55" r="6" fill={c.violet} opacity="0.8" />
-    </svg>
   );
 }
