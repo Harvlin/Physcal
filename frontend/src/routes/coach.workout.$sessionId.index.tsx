@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Check, ChevronDown, ChevronUp, Camera, Zap,
@@ -9,9 +9,16 @@ import { todayWorkout, recoveryWorkout, weightHistory, motivationalCues, type Ex
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
 import { RestTimerOverlay } from "@/components/RestTimerOverlay";
-import { RepCounter } from "@/components/RepCounter";
 import { WeightSelector } from "@/components/WeightSelector";
-import { InjuryPauseSheet } from "@/components/InjuryPauseSheet";
+
+const RepCounter = lazy(() => import("@/components/RepCounter").then(m => ({ default: m.RepCounter })));
+const InjuryPauseSheet = lazy(() => import("@/components/InjuryPauseSheet").then(m => ({ default: m.InjuryPauseSheet })));
+
+// Preload both chunks immediately after mount so they are cached before user taps
+function preloadLazyChunks() {
+  import("@/components/RepCounter");
+  import("@/components/InjuryPauseSheet");
+}
 
 export const Route = createFileRoute("/coach/workout/$sessionId/")({
   component: WorkoutSession,
@@ -28,7 +35,7 @@ function getSuggestedWeight(exerciseId: string): number | undefined {
   return last.weight;
 }
 
-function useElapsedTime(startedAt: string | null) {
+function ElapsedTimeDisplay({ startedAt }: { startedAt: string | null }) {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     if (!startedAt) return;
@@ -40,7 +47,7 @@ function useElapsedTime(startedAt: string | null) {
   }, [startedAt]);
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return <>{m}:{s.toString().padStart(2, "0")}</>;
 }
 
 function WorkoutSession() {
@@ -54,7 +61,6 @@ function WorkoutSession() {
   const setUsedWeight = useApp((s) => s.setUsedWeight);
   const setLiveRepCount = useApp((s) => s.setLiveRepCount);
   const session = useApp((s) => s.workoutSession);
-  const elapsedTime = useElapsedTime(session.sessionStartedAt);
 
   const [phase, setPhase] = useState<"warmup" | "active">("warmup");
   const [showRepCounter, setShowRepCounter] = useState(false);
@@ -66,8 +72,18 @@ function WorkoutSession() {
   const exercises = isRecoveryMode ? recoveryWorkout.exercises : todayWorkout.exercises;
   const workoutTitle = isRecoveryMode ? recoveryWorkout.title : todayWorkout.title;
 
-  // Init session on mount
-  useEffect(() => { initWorkoutSession(sessionId); }, [sessionId]);
+  // Init session on mount + preload lazy chunks immediately in background
+  useEffect(() => {
+    initWorkoutSession(sessionId);
+    // Preload after a short idle to not compete with initial render
+    const id = requestIdleCallback
+      ? requestIdleCallback(preloadLazyChunks)
+      : setTimeout(preloadLazyChunks, 500);
+    return () => {
+      if (requestIdleCallback) cancelIdleCallback(id as number);
+      else clearTimeout(id as ReturnType<typeof setTimeout>);
+    };
+  }, [sessionId]);
 
   // Wake lock
   useEffect(() => {
@@ -194,7 +210,7 @@ function WorkoutSession() {
             <Check size={56} strokeWidth={3} style={{ color: "#1C1C1A" }} />
           </div>
           <div className="text-2xl font-extrabold mb-1">Workout Complete!</div>
-          <div className="text-sm font-medium" style={{ color: c.textSecondary }}>{elapsedTime} total</div>
+          <div className="text-sm font-medium" style={{ color: c.textSecondary }}><ElapsedTimeDisplay startedAt={session.sessionStartedAt} /> total</div>
         </motion.div>
       </div>
     );
@@ -225,7 +241,7 @@ function WorkoutSession() {
             <div className="text-[13px] font-bold leading-tight" style={{ color: c.textPrimary }}>{workoutTitle}</div>
           </div>
           <div className="flex items-center gap-1 text-xs font-bold tabular-nums" style={{ color: c.textTertiary }}>
-            <Clock size={12} /> {elapsedTime}
+            <Clock size={12} /> <ElapsedTimeDisplay startedAt={session.sessionStartedAt} />
           </div>
         </div>
         {/* Progress bar */}
@@ -424,21 +440,29 @@ function WorkoutSession() {
             <Check size={18} strokeWidth={3} />
             {setDoneFlash ? "Set done! ✓" : `Complete set ${currentSetNum}`}
           </motion.button>
-          <InjuryPauseSheet sessionId={sessionId} onSwitchToRecovery={() => setIsRecoveryMode(true)}>
-            <button className="h-14 w-14 rounded-full grid place-items-center transition-all active:scale-90 shrink-0"
-              style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}
-              aria-label="Take a break"
-            >
+          <Suspense fallback={
+            <button className="h-14 w-14 rounded-full grid place-items-center shrink-0" style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}>
               <Zap size={18} />
             </button>
-          </InjuryPauseSheet>
+          }>
+            <InjuryPauseSheet sessionId={sessionId} onSwitchToRecovery={() => setIsRecoveryMode(true)}>
+              <button className="h-14 w-14 rounded-full grid place-items-center transition-all active:scale-90 shrink-0"
+                style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}
+                aria-label="Take a break"
+              >
+                <Zap size={18} />
+              </button>
+            </InjuryPauseSheet>
+          </Suspense>
         </div>
       </div>
 
       {/* Overlays */}
       <RestTimerOverlay nextExercise={nextExerciseForRest} nextSetInfo={nextSetInfo} />
       {showRepCounter && activeExercise && (
-        <RepCounter exercise={activeExercise} targetReps={activeExercise.reps} onComplete={handleRepCounterComplete} onClose={() => setShowRepCounter(false)} />
+        <Suspense fallback={null}>
+          <RepCounter exercise={activeExercise} targetReps={activeExercise.reps} onComplete={handleRepCounterComplete} onClose={() => setShowRepCounter(false)} />
+        </Suspense>
       )}
 
       {/* Exit confirm */}

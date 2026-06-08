@@ -70,14 +70,14 @@ export function HealthProfileCard() {
                 </div>
               ) : (
                 <div>
-                  {profile.conditions.map((c, i) => {
+                  {profile.conditions.map((condition, i) => {
                     const detailParts: string[] = [];
-                    const Icon = conditionIcons[c.type];
-                    for (const v of Object.values(c.details)) {
+                    const Icon = conditionIcons[condition.type];
+                    for (const v of Object.values(condition.details)) {
                       if (Array.isArray(v)) detailParts.push(v.join(", "));
                       else if (v) detailParts.push(String(v));
                     }
-                    detailParts.push(c.severity.charAt(0).toUpperCase() + c.severity.slice(1));
+                    detailParts.push(condition.severity.charAt(0).toUpperCase() + condition.severity.slice(1));
                     return (
                       <div
                         key={i}
@@ -93,11 +93,11 @@ export function HealthProfileCard() {
                             <span className="mt-0.5" style={{ color: c.violet }}>•</span>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>{c.type}</div>
+                            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>{condition.type}</div>
                             <div className="text-xs mt-0.5" style={{ color: c.textSecondary }}>
                               {detailParts.join(" · ")}
                             </div>
-                            {c.avoidances && (
+                            {condition.avoidances && (
                               <div
                                 className="rounded-xl px-3 py-2 text-xs mt-2 flex items-start gap-2"
                                 style={{ background: c.exuberantBg, border: `1px solid ${c.exuberant}22` }}
@@ -108,7 +108,7 @@ export function HealthProfileCard() {
                                   style={{ color: c.exuberant }}
                                 />
                                 <span className="font-medium" style={{ color: c.textPrimary }}>
-                                  {c.avoidances}
+                                  {condition.avoidances}
                                 </span>
                               </div>
                             )}

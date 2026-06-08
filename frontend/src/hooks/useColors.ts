@@ -18,6 +18,7 @@ export function useColors() {
     sunGlare:     isDark ? "#D6E800" : "#A8B800",
     exuberant:    "#F5522A",
     violet:       "#6B5FC3",
+    violetLight:  isDark ? "#9B8EE6" : "#8577D0",
 
     /* Accent backgrounds */
     sunGlareBg:   isDark ? "rgba(214,232,0,0.1)"   : "rgba(168,184,0,0.12)",
@@ -57,6 +58,8 @@ export function useColors() {
     sideNavBetaBorder:  isDark ? "rgba(214,232,0,0.12)"     : "rgba(168,184,0,0.15)",
     sideNavBetaIcon:    isDark ? "#D6E800"                  : "#A8B800",
     sideNavBetaText:    isDark ? "rgba(242,240,233,0.55)"   : "rgba(28,28,26,0.5)",
+
+    cardBg:    isDark ? "rgba(242,240,233,0.04)" : "rgba(255,255,255,0.7)",
 
     /* Misc */
     appBg: isDark ? "#1C1C1A" : "#F4F3EE",

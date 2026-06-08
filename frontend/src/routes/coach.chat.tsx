@@ -77,8 +77,11 @@ function ChatPage() {
         >
           M
           <span
-            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2"
-            style={{ background: "#22C55E", ringColor: "rgba(24,24,22,0.9)" }}
+            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full"
+            style={{
+              background: "#22C55E",
+              outline: `2px solid ${c.isDark ? "rgba(24,24,22,0.9)" : "rgba(244,243,238,0.9)"}`,
+            }}
           />
         </div>
         <div className="flex-1">

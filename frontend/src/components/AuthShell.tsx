@@ -87,7 +87,7 @@ export function AuthInput({
   error,
   c,
 }: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
   type?: string;
   placeholder: string;
   value: string;

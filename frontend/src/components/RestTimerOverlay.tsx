@@ -5,9 +5,18 @@ import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
 import type { Exercise } from "@/lib/mock-data";
 
+let audioCtx: AudioContext | null = null;
+function getAudioContext() {
+  if (typeof window === "undefined") return null;
+  if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
 function playRestDoneSound() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
