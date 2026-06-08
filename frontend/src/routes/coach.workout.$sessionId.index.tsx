@@ -76,11 +76,11 @@ function WorkoutSession() {
   useEffect(() => {
     initWorkoutSession(sessionId);
     // Preload after a short idle to not compete with initial render
-    const id = requestIdleCallback
-      ? requestIdleCallback(preloadLazyChunks)
+    const id = "requestIdleCallback" in window
+      ? window.requestIdleCallback(preloadLazyChunks)
       : setTimeout(preloadLazyChunks, 500);
     return () => {
-      if (requestIdleCallback) cancelIdleCallback(id as number);
+      if ("requestIdleCallback" in window) window.cancelIdleCallback(id as number);
       else clearTimeout(id as ReturnType<typeof setTimeout>);
     };
   }, [sessionId]);
