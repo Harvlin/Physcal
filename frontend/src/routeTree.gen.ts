@@ -19,7 +19,10 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as CoachIndexRouteImport } from './routes/coach.index'
 import { Route as AnalysisIndexRouteImport } from './routes/analysis.index'
+import { Route as ProfileWeightRouteImport } from './routes/profile.weight'
 import { Route as ProfileNudgesRouteImport } from './routes/profile.nudges'
+import { Route as ProfileHistoryRouteImport } from './routes/profile.history'
+import { Route as ProfileGoalsRouteImport } from './routes/profile.goals'
 import { Route as ProfileAchievementsRouteImport } from './routes/profile.achievements'
 import { Route as OnboardingReassessRouteImport } from './routes/onboarding.reassess'
 import { Route as CommunityCreateRouteImport } from './routes/community.create'
@@ -79,9 +82,24 @@ const AnalysisIndexRoute = AnalysisIndexRouteImport.update({
   path: '/analysis/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileWeightRoute = ProfileWeightRouteImport.update({
+  id: '/profile/weight',
+  path: '/profile/weight',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileNudgesRoute = ProfileNudgesRouteImport.update({
   id: '/profile/nudges',
   path: '/profile/nudges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileHistoryRoute = ProfileHistoryRouteImport.update({
+  id: '/profile/history',
+  path: '/profile/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileGoalsRoute = ProfileGoalsRouteImport.update({
+  id: '/profile/goals',
+  path: '/profile/goals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileAchievementsRoute = ProfileAchievementsRouteImport.update({
@@ -140,7 +158,10 @@ export interface FileRoutesByFullPath {
   '/community/create': typeof CommunityCreateRoute
   '/onboarding/reassess': typeof OnboardingReassessRoute
   '/profile/achievements': typeof ProfileAchievementsRoute
+  '/profile/goals': typeof ProfileGoalsRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/nudges': typeof ProfileNudgesRoute
+  '/profile/weight': typeof ProfileWeightRoute
   '/analysis/': typeof AnalysisIndexRoute
   '/coach/': typeof CoachIndexRoute
   '/community/': typeof CommunityIndexRoute
@@ -161,7 +182,10 @@ export interface FileRoutesByTo {
   '/community/create': typeof CommunityCreateRoute
   '/onboarding/reassess': typeof OnboardingReassessRoute
   '/profile/achievements': typeof ProfileAchievementsRoute
+  '/profile/goals': typeof ProfileGoalsRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/nudges': typeof ProfileNudgesRoute
+  '/profile/weight': typeof ProfileWeightRoute
   '/analysis': typeof AnalysisIndexRoute
   '/coach': typeof CoachIndexRoute
   '/community': typeof CommunityIndexRoute
@@ -183,7 +207,10 @@ export interface FileRoutesById {
   '/community/create': typeof CommunityCreateRoute
   '/onboarding/reassess': typeof OnboardingReassessRoute
   '/profile/achievements': typeof ProfileAchievementsRoute
+  '/profile/goals': typeof ProfileGoalsRoute
+  '/profile/history': typeof ProfileHistoryRoute
   '/profile/nudges': typeof ProfileNudgesRoute
+  '/profile/weight': typeof ProfileWeightRoute
   '/analysis/': typeof AnalysisIndexRoute
   '/coach/': typeof CoachIndexRoute
   '/community/': typeof CommunityIndexRoute
@@ -206,7 +233,10 @@ export interface FileRouteTypes {
     | '/community/create'
     | '/onboarding/reassess'
     | '/profile/achievements'
+    | '/profile/goals'
+    | '/profile/history'
     | '/profile/nudges'
+    | '/profile/weight'
     | '/analysis/'
     | '/coach/'
     | '/community/'
@@ -227,7 +257,10 @@ export interface FileRouteTypes {
     | '/community/create'
     | '/onboarding/reassess'
     | '/profile/achievements'
+    | '/profile/goals'
+    | '/profile/history'
     | '/profile/nudges'
+    | '/profile/weight'
     | '/analysis'
     | '/coach'
     | '/community'
@@ -248,7 +281,10 @@ export interface FileRouteTypes {
     | '/community/create'
     | '/onboarding/reassess'
     | '/profile/achievements'
+    | '/profile/goals'
+    | '/profile/history'
     | '/profile/nudges'
+    | '/profile/weight'
     | '/analysis/'
     | '/coach/'
     | '/community/'
@@ -269,7 +305,10 @@ export interface RootRouteChildren {
   CommunityEventIdRoute: typeof CommunityEventIdRoute
   CommunityCreateRoute: typeof CommunityCreateRoute
   ProfileAchievementsRoute: typeof ProfileAchievementsRoute
+  ProfileGoalsRoute: typeof ProfileGoalsRoute
+  ProfileHistoryRoute: typeof ProfileHistoryRoute
   ProfileNudgesRoute: typeof ProfileNudgesRoute
+  ProfileWeightRoute: typeof ProfileWeightRoute
   AnalysisIndexRoute: typeof AnalysisIndexRoute
   CoachIndexRoute: typeof CoachIndexRoute
   CommunityIndexRoute: typeof CommunityIndexRoute
@@ -350,11 +389,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalysisIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/weight': {
+      id: '/profile/weight'
+      path: '/profile/weight'
+      fullPath: '/profile/weight'
+      preLoaderRoute: typeof ProfileWeightRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/nudges': {
       id: '/profile/nudges'
       path: '/profile/nudges'
       fullPath: '/profile/nudges'
       preLoaderRoute: typeof ProfileNudgesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/history': {
+      id: '/profile/history'
+      path: '/profile/history'
+      fullPath: '/profile/history'
+      preLoaderRoute: typeof ProfileHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/goals': {
+      id: '/profile/goals'
+      path: '/profile/goals'
+      fullPath: '/profile/goals'
+      preLoaderRoute: typeof ProfileGoalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile/achievements': {
@@ -440,7 +500,10 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityEventIdRoute: CommunityEventIdRoute,
   CommunityCreateRoute: CommunityCreateRoute,
   ProfileAchievementsRoute: ProfileAchievementsRoute,
+  ProfileGoalsRoute: ProfileGoalsRoute,
+  ProfileHistoryRoute: ProfileHistoryRoute,
   ProfileNudgesRoute: ProfileNudgesRoute,
+  ProfileWeightRoute: ProfileWeightRoute,
   AnalysisIndexRoute: AnalysisIndexRoute,
   CoachIndexRoute: CoachIndexRoute,
   CommunityIndexRoute: CommunityIndexRoute,

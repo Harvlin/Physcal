@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Loader2, Minus, Plus } from "lucide-react";
+import { Sparkles, Loader2, Minus, Plus, GraduationCap, Check } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,27 @@ export const Route = createFileRoute("/community/create")({
 const sports = ["Badminton", "Running", "Yoga", "Cycling", "Swimming", "Football"];
 const tagOptions = ["beginner-friendly", "women-only", "adaptive access", "free", "casual"];
 
+const safetyOptions = [
+  {
+    value: "beginner_friendly" as const,
+    emoji: "🟢",
+    label: "Beginner Friendly",
+    description: "Low intensity · Suitable for injuries & limitations",
+  },
+  {
+    value: "general_fitness" as const,
+    emoji: "🟠",
+    label: "General Fitness",
+    description: "Moderate intensity · Basic fitness level recommended",
+  },
+  {
+    value: "advanced" as const,
+    emoji: "🔴",
+    label: "Advanced / High Intensity",
+    description: "Not recommended for injuries or beginners",
+  },
+];
+
 function CreateEvent() {
   const [name, setName] = useState("");
   const [sport, setSport] = useState("Badminton");
@@ -22,6 +43,9 @@ function CreateEvent() {
   const [tags, setTags] = useState<string[]>([]);
   const [desc, setDesc] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [safetyLevel, setSafetyLevel] = useState<"beginner_friendly" | "general_fitness" | "advanced">("general_fitness");
+  const [instructorPresent, setInstructorPresent] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
   const navigate = useNavigate();
   const c = useColors();
 
@@ -33,6 +57,12 @@ function CreateEvent() {
       );
       setGenerating(false);
     }, 1200);
+  };
+
+  const getAccentColor = (level: string) => {
+    if (level === "beginner_friendly") return c.sunGlare;
+    if (level === "general_fitness") return c.exuberant;
+    return "#E53E3E";
   };
 
   const inputStyle = {
@@ -75,7 +105,7 @@ function CreateEvent() {
               {sports.map((s) => <option key={s} style={{ background: c.appBg }}>{s}</option>)}
             </select>
           </Field>
-          <Field label="Date & time" c={c}>
+          <Field label="Date &amp; time" c={c}>
             <input
               type="datetime-local"
               value={date}
@@ -156,6 +186,81 @@ function CreateEvent() {
           </div>
         </Section>
 
+        {/* Safety Level */}
+        <div>
+          <h2
+            className="text-xs font-bold uppercase tracking-widest mb-3"
+            style={{ color: c.textTertiary }}
+          >
+            Event Safety Level <span style={{ color: c.exuberant }}>*</span>
+          </h2>
+          <div className="space-y-2">
+            {safetyOptions.map((opt) => {
+              const selected = safetyLevel === opt.value;
+              const accent = getAccentColor(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setSafetyLevel(opt.value)}
+                  className="card-frosted w-full text-left p-4 transition-all active:scale-[0.98]"
+                  style={{
+                    borderLeft: selected ? `3px solid ${accent}` : undefined,
+                    opacity: selected ? 1 : 0.6,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{opt.emoji}</span>
+                    <div>
+                      <div className="font-bold text-[14px]" style={{ color: c.textPrimary }}>{opt.label}</div>
+                      <div className="text-[12px] font-medium mt-0.5" style={{ color: c.textTertiary }}>{opt.description}</div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Instructor Present toggle */}
+          <div className="card-frosted p-4 mt-3">
+            <button
+              onClick={() => setInstructorPresent(!instructorPresent)}
+              className="w-full flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <GraduationCap size={20} style={{ color: c.textSecondary, flexShrink: 0 }} />
+                <div className="text-left">
+                  <div className="font-semibold text-[14px]" style={{ color: c.textPrimary }}>
+                    Certified instructor will be present
+                  </div>
+                  <div className="text-[12px] font-medium mt-0.5" style={{ color: c.textTertiary }}>
+                    Participants will see this as a trust badge on your event
+                  </div>
+                </div>
+              </div>
+              <div
+                className="shrink-0 relative transition-colors"
+                style={{
+                  width: 44,
+                  height: 24,
+                  borderRadius: 9999,
+                  background: instructorPresent ? c.sunGlare : c.chipBg,
+                  border: `1px solid ${instructorPresent ? `${c.sunGlare}66` : c.chipBorder}`,
+                }}
+              >
+                <div
+                  className="absolute top-[2px] rounded-full transition-all"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    left: instructorPresent ? 22 : 2,
+                    background: instructorPresent ? "#1C1C1A" : c.textTertiary,
+                  }}
+                />
+              </div>
+            </button>
+          </div>
+        </div>
+
         <Section label="Description" c={c}>
           <textarea
             value={desc}
@@ -180,9 +285,28 @@ function CreateEvent() {
         </Section>
 
         <div className="space-y-3 pt-4">
+          {/* Acknowledgement checkbox */}
+          <button
+            onClick={() => setAcknowledged(!acknowledged)}
+            className="flex items-start gap-3 text-left w-full"
+          >
+            <div
+              className="shrink-0 w-5 h-5 rounded grid place-items-center mt-0.5 transition-colors"
+              style={{
+                background: acknowledged ? c.sunGlare : "transparent",
+                border: `2px solid ${acknowledged ? c.sunGlare : c.chipBorder}`,
+              }}
+            >
+              {acknowledged && <Check size={12} style={{ color: "#1C1C1A" }} strokeWidth={3} />}
+            </div>
+            <span className="text-[13px] font-medium leading-relaxed" style={{ color: c.textSecondary }}>
+              I understand that I am responsible for communicating the physical requirements and risks of this event to all participants.
+            </span>
+          </button>
+
           <button
             onClick={() => navigate({ to: "/community" })}
-            disabled={!name || !date || !location}
+            disabled={!name || !date || !location || !acknowledged}
             className="w-full h-[52px] rounded-full font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-30"
             style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 24px ${c.sunGlareBg}` }}
           >

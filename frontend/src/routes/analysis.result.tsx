@@ -8,11 +8,20 @@ import { analyses } from "@/lib/mock-data";
 import { useColors } from "@/hooks/useColors";
 
 export const Route = createFileRoute("/analysis/result")({
+  validateSearch: (search: Record<string, unknown>): { exerciseId?: string } => {
+    return { exerciseId: search.exerciseId as string | undefined };
+  },
   component: ResultPage,
 });
 
 function ResultPage() {
-  const result = analyses[0];
+  const { exerciseId } = Route.useSearch();
+  const result =
+    analyses.find(
+      (a) =>
+        a.exercise.toLowerCase().replace(/[^a-z]/g, "") ===
+        exerciseId?.toLowerCase().replace(/[^a-z]/g, "")
+    ) || analyses[0];
   const grade =
     result.score >= 80
       ? "Excellent form"

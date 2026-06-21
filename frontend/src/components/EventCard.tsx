@@ -1,6 +1,6 @@
 import type { EventItem } from "@/lib/mock-data";
 import { Link } from "@tanstack/react-router";
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 
@@ -41,6 +41,16 @@ function TagPill({ tag, isDark }: { tag: string; isDark: boolean }) {
       {tag}
     </span>
   );
+}
+
+function getSafetyBadgeStyle(level: string, c: ReturnType<typeof useColors>) {
+  if (level === "beginner_friendly") {
+    return { background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33`, label: "🟢 Beginner Friendly" };
+  }
+  if (level === "general_fitness") {
+    return { background: c.chipBg, color: c.textSecondary, border: `1px solid ${c.inputBorder}`, label: "🟠 General Fitness" };
+  }
+  return { background: "rgba(229, 62, 62, 0.1)", color: "#E53E3E", border: "1px solid rgba(229, 62, 62, 0.3)", label: "🔴 Advanced" };
 }
 
 export function EventCard({ event, compact = false }: { event: EventItem; compact?: boolean }) {
@@ -107,6 +117,43 @@ export function EventCard({ event, compact = false }: { event: EventItem; compac
             </div>
           )}
         </div>
+
+        {/* Safety & Instructor badges — non-compact only */}
+        {!compact && (
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {event.safetyLevel && (() => {
+              const badge = getSafetyBadgeStyle(event.safetyLevel, c);
+              return (
+                <span
+                  className="text-[11px] font-semibold inline-flex items-center whitespace-nowrap"
+                  style={{
+                    background: badge.background,
+                    color: badge.color,
+                    border: badge.border,
+                    borderRadius: "9999px",
+                    padding: "2px 8px",
+                  }}
+                >
+                  {badge.label}
+                </span>
+              );
+            })()}
+            {event.instructorPresent && (
+              <span
+                className="text-[11px] font-semibold inline-flex items-center gap-1 whitespace-nowrap"
+                style={{
+                  background: c.chipBg,
+                  color: c.textSecondary,
+                  border: `1px solid ${c.inputBorder}`,
+                  borderRadius: "9999px",
+                  padding: "2px 8px",
+                }}
+              >
+                <GraduationCap size={10} /> Instructor
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className={cn("flex flex-wrap gap-1.5", compact ? "mt-2" : "mt-3")}>
@@ -147,7 +194,7 @@ export function EventCard({ event, compact = false }: { event: EventItem; compac
               style={{
                 height: "100%",
                 width: `${ratio * 100}%`,
-                background: ratio > 0.8 ? "#F5522A" : c.sunGlare,
+                background: ratio > 0.8 ? c.exuberant : c.sunGlare,
                 borderRadius: "9999px",
               }}
             />

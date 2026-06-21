@@ -7,6 +7,7 @@ const defaultWorkoutSession: WorkoutSessionState = {
   completedSets: {},
   setLog: {},
   usedWeights: {},
+  substitutedExercises: {},
   isResting: false,
   restSecondsRemaining: 0,
   restTotalSeconds: 0,
@@ -103,9 +104,19 @@ export const createWorkoutSlice: StateCreator<AppState, [], [], WorkoutSliceType
     },
   })),
 
-  resumeFromInjury: () => set((s) => ({
-    workoutSession: { ...s.workoutSession, injuryPaused: false },
+  resumeFromInjury: () => set((state) => ({
+    workoutSession: { ...state.workoutSession, injuryPaused: false },
   })),
 
-  resetWorkoutSession: () => set({ workoutSession: { ...defaultWorkoutSession } }),
+  substituteExercise: (originalId, newExerciseName) => set((state) => ({
+    workoutSession: {
+      ...state.workoutSession,
+      substitutedExercises: {
+        ...state.workoutSession.substitutedExercises,
+        [originalId]: newExerciseName,
+      },
+    },
+  })),
+
+  resetWorkoutSession: () => set(() => ({ workoutSession: { ...defaultWorkoutSession } })),
 });

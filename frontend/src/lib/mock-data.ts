@@ -99,6 +99,7 @@ export type Workout = {
   exercises: Exercise[];
   difficulty: "Adjusted" | "Regular" | "Rest";
   adapted: boolean;
+  isRestDay?: boolean;
 };
 
 export const todayWorkout: Workout = {
@@ -202,40 +203,40 @@ export const chatHistory: ChatMessage[] = [
   {
     id: "m1",
     role: "ai",
-    text: "Selamat pagi, Sarah! Bagaimana perasaanmu hari ini?",
+    text: "Good morning, Sarah! How are you feeling today?",
     ts: "08:12",
   },
   {
     id: "m2",
     role: "user",
-    text: "Pagi! Aku agak pegal di paha dari latihan kemarin.",
+    text: "Morning! My thighs are a bit sore from yesterday's workout.",
     ts: "08:14",
   },
   {
     id: "m3",
     role: "ai",
-    text: "Wajar setelah lower body. Aku sudah **menyesuaikan** sesi hari ini:\n\n- Volume turun 20%\n- Tambah peregangan 5 menit\n- Fokus form, bukan beban\n\nMau lanjut atau hari istirahat saja?",
+    text: "That's completely normal after lower body day. I've **adjusted** today's session:\n\n- Volume reduced by 20%\n- Added 5 minutes of stretching\n- Focus on form, not weight\n\nDo you want to proceed or take a rest day instead?",
     ts: "08:14",
   },
-  { id: "m4", role: "user", text: "Lanjut versi yang lebih ringan ya.", ts: "08:15" },
+  { id: "m4", role: "user", text: "Let's go with the lighter version.", ts: "08:15" },
   {
     id: "m5",
     role: "ai",
-    text: "Siap. Sudah aku update di plan-mu. Ingat: konsistensi > intensitas. Kabari aku setelah selesai.",
+    text: "Got it. I've updated your plan. Remember: consistency > intensity. Let me know when you're done.",
     ts: "08:15",
   },
-  { id: "m6", role: "user", text: "Btw, video squat kemarin gimana?", ts: "08:20" },
+  { id: "m6", role: "user", text: "Btw, how was the squat video from yesterday?", ts: "08:20" },
   {
     id: "m7",
     role: "ai",
-    text: "Skor kamu **78** — naik 6 poin dari minggu lalu. Yang sudah bagus:\n- Kedalaman lutut sudah ideal\n- Ritme stabil\n\nYang bisa diperbaiki:\n- Lutut sedikit collapse di rep terakhir\n- Coba drill *banded squat* 2x seminggu",
+    text: "Your score is **78** — up 6 points from last week. What's going great:\n- Knee depth is ideal\n- Stable rhythm\n\nWhat we can improve:\n- Knees slightly collapsed on the last rep\n- Let's try the *banded squat* drill twice a week",
     ts: "08:21",
   },
-  { id: "m8", role: "user", text: "Oke aku coba. Makasih!", ts: "08:22" },
+  { id: "m8", role: "user", text: "Okay, I'll try it. Thanks!", ts: "08:22" },
   {
     id: "m9",
     role: "ai",
-    text: "Selalu di sini kalau perlu. Have a great session.",
+    text: "Always here if you need me. Have a great session.",
     ts: "08:22",
   },
 ];
@@ -252,6 +253,9 @@ export type EventItem = {
   capacity: number;
   host: string;
   description: string;
+  safetyLevel: "beginner_friendly" | "general_fitness" | "advanced";
+  instructorPresent: boolean;
+  isJoined: boolean;
 };
 
 export const events: EventItem[] = [
@@ -267,7 +271,10 @@ export const events: EventItem[] = [
     capacity: 20,
     host: "Budi",
     description:
-      "Sesi santai untuk yang baru mulai. Tidak ada pengalaman? Tidak masalah. Kami punya raket cadangan dan akan ajarkan dasar-dasarnya.",
+      "A casual session for those just starting out. No experience? No problem. We have spare rackets and will teach you the basics.",
+    safetyLevel: "beginner_friendly",
+    instructorPresent: false,
+    isJoined: false,
   },
   {
     id: "ev2",
@@ -281,7 +288,10 @@ export const events: EventItem[] = [
     capacity: 15,
     host: "Maya",
     description:
-      "Lari santai 5K dengan pace ngobrol. Kita berhenti sesuai kebutuhan kelompok — ini tentang kebersamaan, bukan kecepatan.",
+      "A relaxed 5K run at conversational pace. We stop as the group needs — it's about togetherness, not speed.",
+    safetyLevel: "beginner_friendly",
+    instructorPresent: false,
+    isJoined: false,
   },
   {
     id: "ev3",
@@ -295,7 +305,10 @@ export const events: EventItem[] = [
     capacity: 12,
     host: "Sarah",
     description:
-      "Modifikasi tersedia untuk semua pose. Kursi dan props disediakan. Untuk siapa pun — yang baru sembuh dari cedera, mobilitas terbatas, atau hanya ingin gerakan lembut.",
+      "Modifications available for all poses. Chairs and props provided. For anyone — whether recovering from an injury, having limited mobility, or just wanting gentle movement.",
+    safetyLevel: "beginner_friendly",
+    instructorPresent: true,
+    isJoined: false,
   },
   {
     id: "ev4",
@@ -308,7 +321,10 @@ export const events: EventItem[] = [
     joined: 20,
     capacity: 20,
     host: "Budi",
-    description: "Gowes santai 15km menyusuri pantai. Bring your own bike.",
+    description: "A relaxed 15km ride along the coast. Bring your own bike.",
+    safetyLevel: "general_fitness",
+    instructorPresent: false,
+    isJoined: false,
   },
   {
     id: "ev5",
@@ -322,7 +338,10 @@ export const events: EventItem[] = [
     capacity: 10,
     host: "Maya",
     description:
-      "Belajar berenang dari nol — ramah untuk dewasa yang belum pernah belajar atau takut air.",
+      "Learn to swim from scratch — friendly for adults who have never learned or are afraid of the water.",
+    safetyLevel: "beginner_friendly",
+    instructorPresent: true,
+    isJoined: false,
   },
 ];
 
@@ -403,7 +422,7 @@ export const analyses: AnalysisResult[] = [
       { label: "Tempo", value: "2.1s down / 1.4s up", status: "good", note: "Controlled descent" },
     ],
     feedback:
-      "Your **squat depth is excellent** and your tempo is controlled — that's the hard part.\n\n• Lutut sedikit roll ke dalam pada rep terakhir, terutama di sisi kanan\n• Coba aktifkan glute medius dengan banded squat\n• Lihat ke depan, bukan ke bawah, untuk menjaga posisi dada",
+      "Your **squat depth is excellent** and your tempo is controlled — that's the hard part.\n\n• Knees slightly rolled inward on the last rep, especially on the right side\n• Try activating the glute medius with banded squats\n• Look forward, not down, to keep your chest up",
     drill: {
       name: "Banded Squat",
       description:
@@ -420,7 +439,7 @@ export const analyses: AnalysisResult[] = [
       { label: "Hip position", value: "Stable", status: "good", note: "No sagging" },
     ],
     feedback:
-      "**Hip stability is great.**\n\n• Siku terlalu lebar — tarik sedikit ke arah tubuh\n• Bahu cenderung naik di rep akhir, jaga rileks",
+      "**Hip stability is great.**\n\n• Elbows are flaring slightly wide — tuck them closer to your body\n• Shoulders tend to shrug on the final reps, keep them relaxed and down",
     drill: {
       name: "Knee Push-up Tempo",
       description: "3 × 8 with 3-second descent. Builds the right elbow path before adding load.",

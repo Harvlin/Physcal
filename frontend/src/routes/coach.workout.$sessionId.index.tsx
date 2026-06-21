@@ -3,13 +3,16 @@ import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Check, ChevronDown, ChevronUp, Camera, Zap,
-  AlertTriangle, Clock, Dumbbell, Flame,
+  AlertTriangle, Clock, Dumbbell, Flame, RefreshCw
 } from "lucide-react";
 import { todayWorkout, recoveryWorkout, weightHistory, motivationalCues, type Exercise } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
+import { getPersonalRecord, detectPR } from "@/lib/pr-utils";
+import { toast } from "sonner";
 import { RestTimerOverlay } from "@/components/RestTimerOverlay";
 import { WeightSelector } from "@/components/WeightSelector";
+import { SubstituteExerciseSheet } from "@/components/SubstituteExerciseSheet";
 
 const RepCounter = lazy(() => import("@/components/RepCounter").then(m => ({ default: m.RepCounter })));
 const InjuryPauseSheet = lazy(() => import("@/components/InjuryPauseSheet").then(m => ({ default: m.InjuryPauseSheet })));
@@ -55,12 +58,14 @@ function WorkoutSession() {
   const navigate = useNavigate();
   const c = useColors();
 
+  const session = useApp((s) => s.workoutSession);
   const initWorkoutSession = useApp((s) => s.initWorkoutSession);
   const completeSetAction = useApp((s) => s.completeSet);
   const setRestTimer = useApp((s) => s.setRestTimer);
-  const setUsedWeight = useApp((s) => s.setUsedWeight);
   const setLiveRepCount = useApp((s) => s.setLiveRepCount);
-  const session = useApp((s) => s.workoutSession);
+  const setUsedWeight = useApp((s) => s.setUsedWeight);
+  const pauseForInjury = useApp((s) => s.pauseForInjury);
+  const substituteExercise = useApp((s) => s.substituteExercise);
 
   const [phase, setPhase] = useState<"warmup" | "active">("warmup");
   const [showRepCounter, setShowRepCounter] = useState(false);
@@ -68,8 +73,15 @@ function WorkoutSession() {
   const [setDoneFlash, setSetDoneFlash] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [substituteSheetOpen, setSubstituteSheetOpen] = useState(false);
 
-  const exercises = isRecoveryMode ? recoveryWorkout.exercises : todayWorkout.exercises;
+  const substituted = session.substitutedExercises;
+  const exercises = (isRecoveryMode ? recoveryWorkout.exercises : todayWorkout.exercises).map((ex) => {
+    if (substituted[ex.id]) {
+      return { ...ex, name: substituted[ex.id] };
+    }
+    return ex;
+  });
   const workoutTitle = isRecoveryMode ? recoveryWorkout.title : todayWorkout.title;
 
   // Init session on mount + preload lazy chunks immediately in background
@@ -82,6 +94,11 @@ function WorkoutSession() {
     return () => {
       if ("requestIdleCallback" in window) window.cancelIdleCallback(id as number);
       else clearTimeout(id as ReturnType<typeof setTimeout>);
+      
+      // Cleanup stale session if leaving without finishing
+      if (useApp.getState().workoutSession.sessionStartedAt && !window.location.pathname.endsWith("/done")) {
+        useApp.getState().resetWorkoutSession();
+      }
     };
   }, [sessionId]);
 
@@ -143,6 +160,28 @@ function WorkoutSession() {
     const weight = currentWeight ?? activeExercise.defaultWeight;
     completeSetAction(activeExercise.id, reps, weight);
     if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+
+    if (weight !== undefined) {
+      if (detectPR(activeExercise.id, weight)) {
+        toast.success("New PR! 🏆", {
+          description: `${activeExercise.name} at ${weight}${activeExercise.weightUnit || "kg"}`,
+        });
+        
+        // Push to mock data so it doesn't trigger again for the same weight in this session
+        const history = weightHistory.find((h) => h.exerciseId === activeExercise.id);
+        if (history) {
+          history.entries.push({ date: new Date().toISOString(), weight, completedReps: reps, completedSets: 1 });
+        } else {
+          weightHistory.push({
+            exerciseId: activeExercise.id,
+            exerciseName: activeExercise.name,
+            unit: activeExercise.weightUnit || "kg",
+            entries: [{ date: new Date().toISOString(), weight, completedReps: reps, completedSets: 1 }]
+          });
+        }
+      }
+    }
+
     setSetDoneFlash(true);
     setTimeout(() => setSetDoneFlash(false), 500);
     if (activeExercise.rest > 0) setRestTimer(activeExercise.rest);
@@ -274,7 +313,16 @@ function WorkoutSession() {
           >
             {/* Exercise header */}
             <div className="flex items-start justify-between mb-1">
-              <h2 className="text-[26px] font-extrabold leading-tight pr-2">{activeExercise.name}</h2>
+              <div className="flex flex-col gap-1 pr-2">
+                <h2 className="text-[26px] font-extrabold leading-tight">{activeExercise.name}</h2>
+                <button
+                  onClick={() => setSubstituteSheetOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-bold transition-colors w-fit hover:opacity-80"
+                  style={{ color: c.textTertiary }}
+                >
+                  <RefreshCw size={12} /> Substitute
+                </button>
+              </div>
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 mt-1"
                 style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33` }}
               >
@@ -283,12 +331,23 @@ function WorkoutSession() {
             </div>
 
             {/* Subtitle */}
-            <div className="flex items-center gap-3 mb-4 text-[13px] font-semibold" style={{ color: c.textTertiary }}>
+            <div className="flex items-center gap-3 mb-4 text-[13px] font-semibold flex-wrap" style={{ color: c.textTertiary }}>
               <span className="flex items-center gap-1"><Dumbbell size={12} /> {activeExercise.reps} reps</span>
               <span>·</span>
               <span className="flex items-center gap-1"><Clock size={12} /> {activeExercise.rest}s rest</span>
               {activeExercise.defaultWeight !== undefined && (
                 <><span>·</span><span className="flex items-center gap-1"><Flame size={12} /> Weighted</span></>
+              )}
+              {getPersonalRecord(activeExercise.id) !== null && (
+                <>
+                  <span>·</span>
+                  <span 
+                    className="flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-md"
+                    style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}44` }}
+                  >
+                    🏆 PR: {getPersonalRecord(activeExercise.id)}{activeExercise.weightUnit || "kg"}
+                  </span>
+                </>
               )}
             </div>
 
@@ -496,6 +555,20 @@ function WorkoutSession() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SubstituteExerciseSheet
+        isOpen={substituteSheetOpen}
+        onOpenChange={setSubstituteSheetOpen}
+        originalExercise={activeExercise}
+        onSubstitute={(newId) => {
+          if (!activeExercise) return;
+          substituteExercise(activeExercise.id, newId.includes("alt1") ? `Machine ${activeExercise.name}` : newId.includes("alt2") ? `Dumbbell ${activeExercise.name}` : `Bodyweight ${activeExercise.name}`);
+          setSubstituteSheetOpen(false);
+          toast.success("Exercise substituted", {
+            description: "Your session plan has been updated.",
+          });
+        }}
+      />
     </div>
   );
 }

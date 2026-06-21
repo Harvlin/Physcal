@@ -29,6 +29,7 @@ export type WorkoutSessionState = {
   completedSets: Record<string, number>;
   setLog: Record<string, SetLogEntry[]>;
   usedWeights: Record<string, number>;
+  substitutedExercises: Record<string, string>;
   isResting: boolean;
   restSecondsRemaining: number;
   restTotalSeconds: number;
@@ -72,6 +73,10 @@ export type OnboardingSliceType = {
     social?: string;
     notes: string;
     pickedSportId?: string;
+    currentWeight: number | null;
+    goalWeight: number | null;
+    weightUnit: "kg" | "lbs";
+    weeklySessionTarget: number;
   };
   setOnboarding: (patch: Partial<OnboardingSliceType["onboarding"]>) => void;
   setPhysicalDetail: (cond: string, patch: Partial<HealthConditionDetail>) => void;
@@ -91,6 +96,7 @@ export type WorkoutSliceType = {
   setUsedWeight: (exerciseId: string, weight: number) => void;
   pauseForInjury: () => void;
   resumeFromInjury: () => void;
+  substituteExercise: (originalId: string, newExerciseName: string) => void;
   resetWorkoutSession: () => void;
 };
 

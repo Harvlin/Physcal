@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { Flame, Award, Activity, Play, ChevronRight, MessageCircle, Zap } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Flame, Award, Activity, Play, ChevronRight, MessageCircle, Zap, Calendar, Scale, Sparkles, X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { NudgeBanner } from "@/components/NudgeBanner";
 import { EventCard } from "@/components/EventCard";
@@ -19,13 +20,43 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
+function getWeekNumber(d: Date) {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+}
+
 function Dashboard() {
+  const c = useColors();
+  
+  const currentWeek = getWeekNumber(new Date());
+  const summaryKey = `physcal-weekly-summary-seen-${currentWeek}`;
+  const [showSummary, setShowSummary] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(summaryKey) !== "true";
+    }
+    return true;
+  });
+
+  const dismissSummary = () => {
+    localStorage.setItem(summaryKey, "true");
+    setShowSummary(false);
+  };
+
+  const getInsight = (count: number) => {
+    if (count === 0) return "It's a new week. Let's start fresh and get moving.";
+    if (count < 3) return "Good start last week! Let's aim for a bit more consistency this week.";
+    if (count < 5) return "Solid effort last week. Keep the momentum going, you're doing great.";
+    return "Incredible work last week! You absolutely crushed your targets.";
+  };
+  const insight = getInsight(currentUser.totalSessions % 4);
+
   const checkinDone = useApp((s) => s.checkinDoneToday);
   const lastChat = chatHistory[chatHistory.length - 1];
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const lastScore = analyses[0].score;
-  const c = useColors();
 
   return (
     <AppShell>
@@ -56,46 +87,7 @@ function Dashboard() {
               <NudgeBanner />
             </motion.div>
 
-            {/* Check-in banner */}
-            {!checkinDone && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.14 }}
-                className="card-frosted flex items-center gap-4 p-4"
-                style={{ borderColor: `${c.exuberant}33` }}
-              >
-                <div
-                  className="w-11 h-11 rounded-2xl grid place-items-center shrink-0"
-                  style={{ background: c.exuberantBg, color: c.exuberant }}
-                >
-                  <Zap size={18} />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-[14px]" style={{ color: c.textPrimary }}>
-                    How are you feeling today?
-                  </div>
-                  <div className="text-[12px] mt-0.5" style={{ color: c.textSecondary }}>
-                    Quick check-in helps tune your plan
-                  </div>
-                </div>
-                <Link
-                  to="/coach"
-                  className="flex items-center hover:opacity-90 active:scale-[0.97] transition-all"
-                  style={{
-                    background: c.exuberant,
-                    color: "#F2F0E9",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    padding: "0 16px",
-                    height: "36px",
-                    borderRadius: "9999px",
-                  }}
-                >
-                  Log
-                </Link>
-              </motion.div>
-            )}
+
 
             {/* 30-day milestone card */}
             <motion.div
@@ -128,73 +120,207 @@ function Dashboard() {
               </div>
             </motion.div>
 
-            {/* Quick stats */}
+            {/* Athena's Weekly Report */}
+            <AnimatePresence>
+              {showSummary && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="card-frosted p-5 lg:p-6 relative overflow-hidden"
+                >
+                  <div className="absolute top-4 right-4">
+                    <button onClick={dismissSummary} className="transition-colors hover:scale-110 active:scale-95" style={{ color: c.textTertiary }}>
+                       <X size={16} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles size={16} style={{ color: c.exuberant }} />
+                    <span className="text-[12px] font-bold uppercase tracking-[0.1em]" style={{ color: c.exuberant }}>
+                      Athena's Weekly Report
+                    </span>
+                  </div>
+                  <p className="text-[14px] font-medium mb-4 leading-relaxed pr-6" style={{ color: c.textPrimary }}>
+                    {insight}
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                      <div className="text-[20px] font-black leading-none mb-1" style={{ color: c.textPrimary }}>{currentUser.totalSessions % 4}</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textSecondary }}>Sessions</div>
+                    </div>
+                    <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                      <div className="text-[20px] font-black leading-none mb-1" style={{ color: c.textPrimary }}>1</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textSecondary }}>New PRs</div>
+                    </div>
+                    <div className="bg-black/5 dark:bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+                      <div className="text-[20px] font-black leading-none mb-1" style={{ color: c.textPrimary }}>-0.5</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: c.textSecondary }}>kg</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Your Progress */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.28 }}
-              className="grid grid-cols-3 gap-3"
+              className="card-frosted p-5"
             >
-              <Stat icon={<Flame size={16} />} label="Streak"    value={`${currentUser.bestStreak}d`} accentBg={c.exuberantBg} accentColor={c.exuberant} textColor={c.textPrimary} labelColor={c.textTertiary} />
-              <Stat icon={<Activity size={16} />} label="This week" value="3 / 4" accentBg={c.violetBg} accentColor={c.violet} textColor={c.textPrimary} labelColor={c.textTertiary} />
-              <Stat icon={<Award size={16} />}    label="Last score" value={String(lastScore)} accentBg={c.sunGlareBg} accentColor={c.sunGlare} textColor={c.textPrimary} labelColor={c.textTertiary} />
+              <h2 className="font-bold text-[13px] uppercase tracking-[0.1em] mb-4" style={{ color: c.textTertiary }}>
+                Your Progress
+              </h2>
+              <div className="flex items-center justify-between">
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="font-black tabular leading-none whitespace-nowrap mb-2 flex items-center gap-1.5" style={{ fontSize: "24px", color: c.textPrimary }}>
+                    {currentUser.bestStreak}d <Flame size={18} style={{ color: c.exuberant }} />
+                  </div>
+                  <div className="uppercase tracking-wider font-semibold" style={{ fontSize: "10px", color: c.textSecondary }}>
+                    Day Streak
+                  </div>
+                </div>
+                
+                <div className="w-px h-12 mx-2" style={{ background: c.chipBorder }} />
+                
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="font-black tabular leading-none whitespace-nowrap mb-2 flex items-center gap-1.5" style={{ fontSize: "24px", color: c.textPrimary }}>
+                    {currentUser.totalSessions % 4} / {useApp.getState().onboarding.weeklySessionTarget || 3} <Calendar size={18} style={{ color: c.violet }} />
+                  </div>
+                  <div className="uppercase tracking-wider font-semibold" style={{ fontSize: "10px", color: c.textSecondary }}>
+                    This Week
+                  </div>
+                </div>
+
+                <div className="w-px h-12 mx-2" style={{ background: c.chipBorder }} />
+                
+                <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="font-black tabular leading-none whitespace-nowrap mb-2 flex items-center gap-1.5" style={{ fontSize: "20px", color: c.textPrimary }}>
+                    {useApp.getState().onboarding.goalWeight ? `${useApp.getState().onboarding.goalWeight} ${useApp.getState().onboarding.weightUnit}` : "—"}
+                    <Scale size={18} style={{ color: c.sunGlare }} />
+                  </div>
+                  <div className="uppercase tracking-wider font-semibold" style={{ fontSize: "10px", color: c.textSecondary }}>
+                    Weight Goal
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
-            {/* Today's Workout */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.35 }}
-              className="card-frosted p-5 lg:p-6"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <span
-                  className="text-[10px] font-bold uppercase tracking-[0.15em]"
-                  style={{ color: c.textTertiary }}
-                >
-                  Today's plan
-                </span>
-                <span className="h-px flex-1" style={{ background: c.divider }} />
-                <span
-                  className="text-[11px] tabular font-semibold px-2 py-0.5 rounded-full"
-                  style={{ background: c.exuberantBg, color: c.exuberant }}
-                >
-                  {todayWorkout.duration} min
-                </span>
-              </div>
-              <h2
-                className="font-display font-bold mb-3"
-                style={{ fontSize: "22px", color: c.textPrimary }}
+            {/* Today's Workout or Rest Day */}
+            {!todayWorkout || todayWorkout.isRestDay ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.35 }}
+                className="card-frosted p-5 lg:p-6"
               >
-                {todayWorkout.title}
-              </h2>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 mb-5">
-                {todayWorkout.exercises.map((e) => (
+                <div className="flex items-center gap-2 mb-3">
                   <span
-                    key={e.id}
-                    className="text-[12px] font-semibold px-3 h-7 inline-flex items-center whitespace-nowrap rounded-full"
-                    style={{ background: c.exerciseChipBg, color: c.exerciseChipColor, border: `1px solid ${c.exerciseChipBorder}` }}
+                    className="text-[10px] font-bold uppercase tracking-[0.15em]"
+                    style={{ color: c.textTertiary }}
                   >
-                    {e.name}
+                    Today's plan
                   </span>
-                ))}
-              </div>
-              <Link
-                to="/coach/workout/$sessionId"
-                params={{ sessionId: todayWorkout.id }}
-                className="w-full flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all font-bold"
-                style={{
-                  background: c.sunGlare,
-                  color: "#1C1C1A",
-                  height: "52px",
-                  borderRadius: "9999px",
-                  fontSize: "15px",
-                  boxShadow: `0 0 32px ${c.sunGlareBg}`,
-                }}
+                  <span className="h-px flex-1" style={{ background: c.divider }} />
+                </div>
+                <h2
+                  className="font-display font-bold mb-3 flex items-center gap-2"
+                  style={{ fontSize: "22px", color: c.textPrimary }}
+                >
+                  Rest Day <span style={{ color: c.exuberant }}>🌿</span>
+                </h2>
+                <p className="text-[14px] font-medium mb-5" style={{ color: c.textSecondary }}>
+                  {[
+                    "Great athletes know when to rest. Today is part of the plan.",
+                    "Your muscles are growing while you rest. Trust the process.",
+                    "Recovery is where the gains happen. Let your body rebuild today.",
+                    "A day off is a day of progress.",
+                    "Rest is training. Take it easy today.",
+                    "Recharge your batteries. Tomorrow we go again.",
+                    "Listen to your body. Today is for recovery."
+                  ][new Date().getDay()]}
+                </p>
+                <div className="text-[12px] font-bold mb-3" style={{ color: c.textPrimary }}>
+                  Suggested for today
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className="text-[12px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1"
+                    style={{ background: c.chipBg, color: c.textSecondary, border: `1px solid ${c.chipBorder}` }}
+                  >
+                    10-min morning stretch
+                  </span>
+                  <span
+                    className="text-[12px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1"
+                    style={{ background: c.chipBg, color: c.textSecondary, border: `1px solid ${c.chipBorder}` }}
+                  >
+                    Hydration focus
+                  </span>
+                  <span
+                    className="text-[12px] font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1"
+                    style={{ background: c.chipBg, color: c.textSecondary, border: `1px solid ${c.chipBorder}` }}
+                  >
+                    Light walk
+                  </span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.35 }}
+                className="card-frosted p-5 lg:p-6"
               >
-                <Play size={16} fill="currentColor" /> Start workout
-              </Link>
-            </motion.div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.15em]"
+                    style={{ color: c.textTertiary }}
+                  >
+                    Today's plan
+                  </span>
+                  <span className="h-px flex-1" style={{ background: c.divider }} />
+                  <span
+                    className="text-[11px] tabular font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: c.exuberantBg, color: c.exuberant }}
+                  >
+                    {todayWorkout.duration} min
+                  </span>
+                </div>
+                <h2
+                  className="font-display font-bold mb-3"
+                  style={{ fontSize: "22px", color: c.textPrimary }}
+                >
+                  {todayWorkout.title}
+                </h2>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 mb-5">
+                  {todayWorkout.exercises.map((e) => (
+                    <span
+                      key={e.id}
+                      className="text-[12px] font-semibold px-3 h-7 inline-flex items-center whitespace-nowrap rounded-full"
+                      style={{ background: c.exerciseChipBg, color: c.exerciseChipColor, border: `1px solid ${c.exerciseChipBorder}` }}
+                    >
+                      {e.name}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  to="/coach/workout/$sessionId"
+                  params={{ sessionId: todayWorkout.id }}
+                  className="w-full flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all font-bold"
+                  style={{
+                    background: c.sunGlare,
+                    color: "#1C1C1A",
+                    height: "52px",
+                    borderRadius: "9999px",
+                    fontSize: "15px",
+                    boxShadow: `0 0 32px ${c.sunGlareBg}`,
+                  }}
+                >
+                  <Play size={16} fill="currentColor" /> Start workout
+                </Link>
+              </motion.div>
+            )}
 
             {/* Coach preview */}
             <motion.div

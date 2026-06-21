@@ -6,6 +6,10 @@ const defaultOnboarding = {
   physical: [],
   physicalDetails: {},
   notes: "",
+  currentWeight: null,
+  goalWeight: null,
+  weightUnit: "kg" as const,
+  weeklySessionTarget: 3,
 };
 
 export const createOnboardingSlice: StateCreator<AppState, [], [], OnboardingSliceType> = (set) => ({

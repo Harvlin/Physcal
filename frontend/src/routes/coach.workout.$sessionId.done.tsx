@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check, Heart, Clock, Dumbbell, Repeat, TrendingUp } from "lucide-react";
-import { todayWorkout, weightHistory } from "@/lib/mock-data";
+import { todayWorkout, recoveryWorkout, weightHistory } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/coach/workout/$sessionId/done")({
   component: DonePage,
@@ -35,22 +36,21 @@ function DonePage() {
 
   // Weight changes
   const weightChanges = useMemo(() => {
-    const changes: { exerciseName: string; exerciseId: string; oldWeight: number; newWeight: number; unit: string }[] = [];
-    for (const [exId, usedWeight] of Object.entries(session.usedWeights)) {
-      const ex = todayWorkout.exercises.find((e) => e.id === exId);
-      if (!ex || ex.defaultWeight === undefined) continue;
-      if (usedWeight !== ex.defaultWeight) {
+    const changes = [];
+    const sourceWorkout = session.injuryPaused ? recoveryWorkout : todayWorkout;
+    for (const ex of sourceWorkout.exercises) {
+      if (session.usedWeights[ex.id] && ex.defaultWeight && session.usedWeights[ex.id] > ex.defaultWeight) {
         changes.push({
-          exerciseName: ex.name,
-          exerciseId: exId,
+          exerciseId: ex.id,
+          exerciseName: session.substitutedExercises?.[ex.id] || ex.name,
           oldWeight: ex.defaultWeight,
-          newWeight: usedWeight,
+          newWeight: session.usedWeights[ex.id],
           unit: ex.weightUnit || "kg",
         });
       }
     }
     return changes;
-  }, [session.usedWeights]);
+  }, [session.usedWeights, session.injuryPaused, session.substitutedExercises]);
 
   const [weightUpdated, setWeightUpdated] = useState<Record<string, boolean>>({});
 
@@ -133,7 +133,10 @@ function DonePage() {
             {["Too easy", "Just right", "Too hard"].map((f) => (
               <button
                 key={f}
-                onClick={() => setFeedback(f)}
+                onClick={() => {
+                  setFeedback(f);
+                  toast.success("Feedback saved!", { description: "We'll adjust your next session." });
+                }}
                 className="h-12 rounded-xl text-sm font-semibold transition-all active:scale-95"
                 style={{
                   background: feedback === f ? c.sunGlareBg : c.chipBg,

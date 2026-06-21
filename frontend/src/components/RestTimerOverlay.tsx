@@ -111,6 +111,8 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
             WebkitBackdropFilter: "blur(32px) saturate(150%)",
           }}
         >
+
+
           {/* Header */}
           <div className="w-full max-w-sm flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
@@ -122,16 +124,6 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
                 Rest
               </span>
             </div>
-            <button
-              onClick={handleSkip}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95"
-              style={{
-                color: "rgba(255,255,255,0.7)",
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}
-            >
-              Skip <SkipForward size={14} />
-            </button>
           </div>
 
           {/* Ring + countdown */}

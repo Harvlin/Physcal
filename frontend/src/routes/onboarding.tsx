@@ -14,6 +14,7 @@ import {
   Accessibility,
   Activity,
   ShieldAlert,
+  Scale,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { sportRecommendations } from "@/lib/mock-data";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/onboarding")({
 const goalOptions = [
   { id: "health", label: "General health", icon: HeartPulse },
   { id: "weight", label: "Lose weight", icon: Flame },
+  { id: "gain_weight", label: "Gain weight", icon: Scale },
   { id: "strength", label: "Build strength", icon: Dumbbell },
   { id: "social", label: "Have fun & socialize", icon: Users },
   { id: "recovery", label: "Recover from injury", icon: Shield },
@@ -61,6 +63,7 @@ function OnboardingPage() {
   const [showResult, setShowResult] = useState(false);
   const onboarding = useApp((s) => s.onboarding);
   const setOnboarding = useApp((s) => s.setOnboarding);
+  const resetOnboarding = useApp((s) => s.resetOnboarding);
   const navigate = useNavigate();
   const c = useColors();
 
@@ -83,6 +86,8 @@ function OnboardingPage() {
     };
   }, [loading]);
 
+  const needsWeightStep = onboarding.goals.includes("weight") || onboarding.goals.includes("gain_weight");
+
   const next = () => {
     if (step === 3) {
       setLoading(true);
@@ -90,15 +95,28 @@ function OnboardingPage() {
       return;
     }
     setDirection(1);
-    setStep((s) => Math.min(4, s + 1));
+    if (step === 1 && needsWeightStep) {
+      setStep(1.5);
+    } else if (step === 1.5) {
+      setStep(2);
+    } else {
+      setStep((s) => Math.min(4, s + 1));
+    }
   };
   const back = () => {
     setDirection(-1);
-    setStep((s) => Math.max(1, s - 1));
+    if (step === 2 && needsWeightStep) {
+      setStep(1.5);
+    } else if (step === 1.5) {
+      setStep(1);
+    } else {
+      setStep((s) => Math.max(1, s - 1));
+    }
   };
 
   const canContinue = (() => {
     if (step === 1) return onboarding.goals.length > 0;
+    if (step === 1.5) return onboarding.currentWeight !== null && onboarding.goalWeight !== null && onboarding.currentWeight > 0 && onboarding.goalWeight > 0;
     if (step === 2)
       return (
         onboarding.fitnessLevel &&
@@ -135,7 +153,7 @@ function OnboardingPage() {
           <div className="w-10" />
         )}
         {step === 1 && (
-          <Link to="/dashboard" className="text-sm transition-colors" style={{ color: c.textTertiary }} onMouseEnter={e => e.currentTarget.style.color = c.textPrimary} onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}>
+          <Link to="/dashboard" onClick={() => resetOnboarding()} className="text-sm transition-colors" style={{ color: c.textTertiary }} onMouseEnter={e => e.currentTarget.style.color = c.textPrimary} onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}>
             Skip
           </Link>
         )}
@@ -184,6 +202,79 @@ function OnboardingPage() {
                       </button>
                     );
                   })}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 1.5 && (
+              <motion.div key="s15" {...slide(direction)} className="space-y-7">
+                <h1 className="text-3xl sm:text-4xl font-semibold mb-2" style={{ color: c.textPrimary }}>Let's set a target</h1>
+                
+                <div className="card-frosted p-5">
+                  <div className="flex justify-between items-center mb-5">
+                    <div className="text-sm font-medium" style={{ color: c.textPrimary }}>Weight Goal</div>
+                    <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: c.chipBorder }}>
+                      <button
+                        onClick={() => {
+                          if (onboarding.weightUnit !== "kg") {
+                            setOnboarding({
+                              weightUnit: "kg",
+                              currentWeight: onboarding.currentWeight ? Number((onboarding.currentWeight / 2.2046).toFixed(1)) : null,
+                              goalWeight: onboarding.goalWeight ? Number((onboarding.goalWeight / 2.2046).toFixed(1)) : null,
+                            });
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold transition-colors"
+                        style={onboarding.weightUnit === "kg" ? { background: c.sunGlare, color: c.appBg } : { background: c.chipBg, color: c.textSecondary }}
+                      >
+                        kg
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onboarding.weightUnit !== "lbs") {
+                            setOnboarding({
+                              weightUnit: "lbs",
+                              currentWeight: onboarding.currentWeight ? Number((onboarding.currentWeight * 2.2046).toFixed(1)) : null,
+                              goalWeight: onboarding.goalWeight ? Number((onboarding.goalWeight * 2.2046).toFixed(1)) : null,
+                            });
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold transition-colors"
+                        style={onboarding.weightUnit === "lbs" ? { background: c.sunGlare, color: c.appBg } : { background: c.chipBg, color: c.textSecondary }}
+                      >
+                        lbs
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-xs mb-1 font-semibold" style={{ color: c.textSecondary }}>Current</label>
+                      <input
+                        type="number"
+                        value={onboarding.currentWeight ?? ""}
+                        onChange={(e) => setOnboarding({ currentWeight: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full rounded-lg px-4 py-3 text-lg font-bold focus:outline-none transition-colors"
+                        style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
+                        onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                        onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs mb-1 font-semibold" style={{ color: c.textSecondary }}>Goal</label>
+                      <input
+                        type="number"
+                        value={onboarding.goalWeight ?? ""}
+                        onChange={(e) => setOnboarding({ goalWeight: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full rounded-lg px-4 py-3 text-lg font-bold focus:outline-none transition-colors"
+                        style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
+                        onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                        onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                        placeholder="0.0"
+                      />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -348,7 +439,7 @@ function OnboardingPage() {
                       sport={sport}
                       onPick={() => {
                         setOnboarding({ pickedSportId: sport.id });
-                        navigate({ to: "/dashboard" });
+                        navigate({ to: "/dashboard" }).then(() => resetOnboarding());
                       }}
                       c={c}
                     />
@@ -384,7 +475,7 @@ function OnboardingPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate({ to: "/dashboard" })}
+                  onClick={() => navigate({ to: "/dashboard" }).then(() => resetOnboarding())}
                   className="text-sm underline underline-offset-4 block mx-auto transition-colors"
                   style={{ color: c.textSecondary }}
                   onMouseEnter={e => e.currentTarget.style.color = c.textPrimary}

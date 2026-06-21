@@ -48,7 +48,7 @@ function AnalysisPage() {
         if (p === null) return null;
         if (p >= 100) {
           clearInterval(id);
-          navigate({ to: "/analysis/result" });
+          navigate({ to: "/analysis/result", search: { exerciseId: exercise } });
           return 100;
         }
         return p + 8;

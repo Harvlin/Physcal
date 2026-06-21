@@ -392,6 +392,23 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(242,240,233,0.12), transparent);
   }
+
+  /* ─── Skeleton shimmer ─── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-card-start) 0%,
+      var(--surface-card-end) 40%,
+      var(--surface-card-start) 80%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @layer utilities {

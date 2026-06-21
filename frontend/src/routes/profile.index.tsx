@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Bell, RefreshCw } from "lucide-react";
+import { ChevronRight, Bell, RefreshCw, Scale, Target, History } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from "recharts";
 import { AppShell } from "@/components/layout/AppShell";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -152,6 +152,44 @@ function ProfilePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card c={c} title="Tracking">
+            <div className="space-y-1 text-sm" style={{ color: c.textPrimary }}>
+              <Link
+                to="/profile/goals"
+                className="flex items-center justify-between py-2 font-medium -mx-2 px-2 rounded-lg transition-colors"
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <span className="flex items-center gap-2">
+                  <Target size={14} /> Goals & Targets
+                </span>
+                <ChevronRight size={14} style={{ color: c.textTertiary }} />
+              </Link>
+              <Link
+                to="/profile/history"
+                className="flex items-center justify-between py-2 font-medium -mx-2 px-2 rounded-lg transition-colors"
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <span className="flex items-center gap-2">
+                  <History size={14} /> History
+                </span>
+                <ChevronRight size={14} style={{ color: c.textTertiary }} />
+              </Link>
+              <Link
+                to="/profile/weight"
+                className="flex items-center justify-between py-2 font-medium -mx-2 px-2 rounded-lg transition-colors"
+                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+              >
+                <span className="flex items-center gap-2">
+                  <Scale size={14} /> Weight
+                </span>
+                <ChevronRight size={14} style={{ color: c.textTertiary }} />
+              </Link>
+            </div>
+          </Card>
+
           <Card c={c} title="Notifications">
             <Toggle
               c={c}
