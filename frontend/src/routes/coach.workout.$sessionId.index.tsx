@@ -13,14 +13,18 @@ import { toast } from "sonner";
 import { RestTimerOverlay } from "@/components/RestTimerOverlay";
 import { WeightSelector } from "@/components/WeightSelector";
 import { SubstituteExerciseSheet } from "@/components/SubstituteExerciseSheet";
+import { HoldTimer } from "@/components/HoldTimer";
+import { DistanceLogger } from "@/components/DistanceLogger";
 
 const RepCounter = lazy(() => import("@/components/RepCounter").then(m => ({ default: m.RepCounter })));
 const InjuryPauseSheet = lazy(() => import("@/components/InjuryPauseSheet").then(m => ({ default: m.InjuryPauseSheet })));
+const IntervalTimer = lazy(() => import("@/components/IntervalTimer").then(m => ({ default: m.IntervalTimer })));
 
 // Preload both chunks immediately after mount so they are cached before user taps
 function preloadLazyChunks() {
   import("@/components/RepCounter");
   import("@/components/InjuryPauseSheet");
+  import("@/components/IntervalTimer");
 }
 
 export const Route = createFileRoute("/coach/workout/$sessionId/")({
@@ -61,6 +65,7 @@ function WorkoutSession() {
   const session = useApp((s) => s.workoutSession);
   const initWorkoutSession = useApp((s) => s.initWorkoutSession);
   const completeSetAction = useApp((s) => s.completeSet);
+  const completeDistanceSet = useApp((s) => s.completeDistanceSet);
   const setRestTimer = useApp((s) => s.setRestTimer);
   const setLiveRepCount = useApp((s) => s.setLiveRepCount);
   const setUsedWeight = useApp((s) => s.setUsedWeight);
@@ -188,6 +193,16 @@ function WorkoutSession() {
     setTipExpanded(false);
   };
 
+  const handleDistanceDone = (durationMin: number, distanceKm: number) => {
+    if (!activeExercise) return;
+    completeDistanceSet(activeExercise.id, durationMin, distanceKm);
+    if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+    setSetDoneFlash(true);
+    setTimeout(() => setSetDoneFlash(false), 500);
+    if (activeExercise.rest > 0) setRestTimer(activeExercise.rest);
+    setTipExpanded(false);
+  };
+
   const handleRepCounterComplete = (reps: number) => {
     setLiveRepCount(reps);
     setShowRepCounter(false);
@@ -216,7 +231,10 @@ function WorkoutSession() {
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm">{e.name}</div>
                   <div className="text-xs font-medium mt-0.5" style={{ color: c.textTertiary }}>
-                    {e.sets}×{e.reps} {e.defaultWeight ? `· ${e.defaultWeight} ${e.weightUnit || "kg"}` : ""}
+                    {e.trackingMode === "rep" && `${e.sets}×${e.reps} ${e.defaultWeight ? `· ${e.defaultWeight} ${e.weightUnit || "kg"}` : ""}`}
+                    {e.trackingMode === "hold" && `${e.sets}× ${e.reps}s hold`}
+                    {e.trackingMode === "interval" && `${e.intervalRounds} rounds · ${e.workSeconds}s on`}
+                    {e.trackingMode === "distance" && `~${e.targetDurationMinutes} min`}
                   </div>
                 </div>
                 <div className="text-xs font-semibold tabular-nums" style={{ color: c.textTertiary }}>{e.rest}s</div>
@@ -416,8 +434,8 @@ function WorkoutSession() {
                 "{cue}"
               </p>
 
-              {/* Rep counter */}
-              {activeExercise.supportsRepCount && !isRecoveryMode && (
+              {/* Modes */}
+              {activeExercise.trackingMode === "rep" && activeExercise.supportsRepCount && !isRecoveryMode && (
                 <div>
                   {session.liveRepCount > 0 ? (
                     <button onClick={() => setShowRepCounter(true)}
@@ -446,6 +464,18 @@ function WorkoutSession() {
                     </button>
                   )}
                 </div>
+              )}
+              
+              {activeExercise.trackingMode === "hold" && (
+                <HoldTimer exercise={activeExercise} onDone={handleCompleteSet} />
+              )}
+              {activeExercise.trackingMode === "interval" && (
+                <Suspense fallback={<div className="h-40" />}>
+                  <IntervalTimer exercise={activeExercise} onComplete={handleCompleteSet} />
+                </Suspense>
+              )}
+              {activeExercise.trackingMode === "distance" && (
+                <DistanceLogger exercise={activeExercise} onDone={handleDistanceDone} />
               )}
             </div>
           </motion.div>
@@ -485,20 +515,24 @@ function WorkoutSession() {
       {/* ─── Sticky bottom ─── */}
       <div className="px-4 pb-5 pt-1">
         <div className="flex items-center gap-2.5">
-          <motion.button
-            onClick={handleCompleteSet}
-            animate={setDoneFlash ? { scale: [1, 1.03, 1] } : {}}
-            transition={{ duration: 0.3 }}
-            className="flex-1 h-14 rounded-full font-bold text-[15px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            style={{
-              background: setDoneFlash ? "oklch(0.52 0.14 152)" : c.sunGlare,
-              color: "#1C1C1A",
-              boxShadow: setDoneFlash ? "0 0 30px oklch(0.52 0.14 152 / 0.4)" : `0 0 24px ${c.sunGlareBg}`,
-            }}
-          >
-            <Check size={18} strokeWidth={3} />
-            {setDoneFlash ? "Set done! ✓" : `Complete set ${currentSetNum}`}
-          </motion.button>
+          {(!activeExercise || activeExercise.trackingMode === "rep") ? (
+            <motion.button
+              onClick={handleCompleteSet}
+              animate={setDoneFlash ? { scale: [1, 1.03, 1] } : {}}
+              transition={{ duration: 0.3 }}
+              className="flex-1 h-14 rounded-full font-bold text-[15px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              style={{
+                background: setDoneFlash ? "oklch(0.52 0.14 152)" : c.sunGlare,
+                color: "#1C1C1A",
+                boxShadow: setDoneFlash ? "0 0 30px oklch(0.52 0.14 152 / 0.4)" : `0 0 24px ${c.sunGlareBg}`,
+              }}
+            >
+              <Check size={18} strokeWidth={3} />
+              {setDoneFlash ? "Set done! ✓" : `Complete set ${currentSetNum}`}
+            </motion.button>
+          ) : (
+            <div className="flex-1" />
+          )}
           <Suspense fallback={
             <button className="h-14 w-14 rounded-full grid place-items-center shrink-0" style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}>
               <Zap size={18} />

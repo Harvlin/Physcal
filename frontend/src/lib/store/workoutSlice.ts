@@ -16,6 +16,15 @@ const defaultWorkoutSession: WorkoutSessionState = {
   liveRepCount: 0,
   injuryPaused: false,
   sessionStartedAt: null,
+  
+  intervalCurrentRound: 0,
+  intervalPhase: null,
+  intervalSecondsRemaining: 0,
+  
+  holdSecondsRemaining: 0,
+  holdActive: false,
+  
+  rpeLog: {},
 };
 
 export const createWorkoutSlice: StateCreator<AppState, [], [], WorkoutSliceType> = (set) => ({
@@ -119,4 +128,86 @@ export const createWorkoutSlice: StateCreator<AppState, [], [], WorkoutSliceType
   })),
 
   resetWorkoutSession: () => set(() => ({ workoutSession: { ...defaultWorkoutSession } })),
+
+  startHold: (exerciseId, seconds) => set((s) => ({
+    workoutSession: {
+      ...s.workoutSession,
+      activeExerciseId: exerciseId,
+      holdActive: true,
+      holdSecondsRemaining: seconds,
+    },
+  })),
+
+  tickHoldTimer: () => set((s) => {
+    const next = s.workoutSession.holdSecondsRemaining - 1;
+    if (next <= 0) {
+      return { workoutSession: { ...s.workoutSession, holdActive: false, holdSecondsRemaining: 0 } };
+    }
+    return { workoutSession: { ...s.workoutSession, holdSecondsRemaining: next } };
+  }),
+
+  endHold: () => set((s) => ({
+    workoutSession: { ...s.workoutSession, holdActive: false, holdSecondsRemaining: 0 },
+  })),
+
+  startIntervalRound: (exerciseId, workSec) => set((s) => ({
+    workoutSession: {
+      ...s.workoutSession,
+      activeExerciseId: exerciseId,
+      intervalCurrentRound: 1,
+      intervalPhase: "work",
+      intervalSecondsRemaining: workSec,
+    }
+  })),
+
+  tickIntervalTimer: () => set((s) => {
+    const next = s.workoutSession.intervalSecondsRemaining - 1;
+    return { workoutSession: { ...s.workoutSession, intervalSecondsRemaining: Math.max(0, next) } };
+  }),
+
+  setIntervalPhase: (phase, seconds, round) => set((s) => ({
+    workoutSession: {
+      ...s.workoutSession,
+      intervalPhase: phase,
+      intervalSecondsRemaining: seconds,
+      intervalCurrentRound: round,
+    }
+  })),
+
+  endInterval: () => set((s) => ({
+    workoutSession: {
+      ...s.workoutSession,
+      intervalPhase: null,
+      intervalSecondsRemaining: 0,
+      intervalCurrentRound: 0,
+    }
+  })),
+
+  logRpe: (exerciseId, rpe) => set((s) => ({
+    workoutSession: {
+      ...s.workoutSession,
+      rpeLog: { ...s.workoutSession.rpeLog, [exerciseId]: rpe },
+    }
+  })),
+
+  completeDistanceSet: (exerciseId, durationMin, distanceKm) => set((s) => {
+    const prev = s.workoutSession.completedSets[exerciseId] ?? 0;
+    const entry: SetLogEntry = {
+      set: prev + 1,
+      reps: 1,
+      completedAt: new Date().toISOString(),
+      durationMin,
+      distanceKm,
+    };
+    return {
+      workoutSession: {
+        ...s.workoutSession,
+        completedSets: { ...s.workoutSession.completedSets, [exerciseId]: prev + 1 },
+        setLog: {
+          ...s.workoutSession.setLog,
+          [exerciseId]: [...(s.workoutSession.setLog[exerciseId] ?? []), entry],
+        },
+      },
+    };
+  }),
 });

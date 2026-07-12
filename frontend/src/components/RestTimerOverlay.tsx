@@ -179,7 +179,10 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
               </div>
               {nextExercise && !nextSetInfo && (
                 <div className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  {nextExercise.sets} sets × {nextExercise.reps} reps
+                  {(!nextExercise.trackingMode || nextExercise.trackingMode === "rep") && `${nextExercise.sets} sets × ${nextExercise.reps} reps`}
+                  {nextExercise.trackingMode === "hold" && `${nextExercise.sets}× ${nextExercise.reps}s hold`}
+                  {nextExercise.trackingMode === "interval" && `${nextExercise.intervalRounds} rounds`}
+                  {nextExercise.trackingMode === "distance" && `~${nextExercise.targetDurationMinutes} min`}
                 </div>
               )}
             </div>

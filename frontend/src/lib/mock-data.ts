@@ -45,12 +45,24 @@ export const otherUsers: User[] = [
   },
 ];
 
+export type TrackingMode = "rep" | "hold" | "interval" | "distance";
+
+export type FocusArea =
+  | "full_body_strength"
+  | "lower_endurance"
+  | "core_rotational"
+  | "shoulder_mobility"
+  | "agility"
+  | "balance_flexibility"
+  | "cardio_endurance";
+
 export type Sport = {
   id: string;
   name: string;
   reason: string;
   difficulty: "Beginner" | "Intermediate";
   why: string;
+  focusAreaPriorities: FocusArea[];
 };
 
 export const sportRecommendations: Sport[] = [
@@ -60,6 +72,7 @@ export const sportRecommendations: Sport[] = [
     reason: "Social, low-impact, and forgiving for beginners — great for building confidence.",
     difficulty: "Beginner",
     why: "Your goals lean social and stress-relief, and you mentioned joint sensitivity. Badminton is gentle on joints, easy to learn the basics, and the doubles format takes pressure off solo performance.",
+    focusAreaPriorities: ["agility", "shoulder_mobility", "core_rotational", "cardio_endurance"],
   },
   {
     id: "swimming",
@@ -67,6 +80,7 @@ export const sportRecommendations: Sport[] = [
     reason: "Full-body strength with zero joint impact — ideal for steady, sustainable progress.",
     difficulty: "Beginner",
     why: "Swimming gives you cardio and strength without weight-bearing stress. Perfect for someone starting out who wants to feel capable, not exhausted.",
+    focusAreaPriorities: ["shoulder_mobility", "core_rotational", "cardio_endurance", "full_body_strength"],
   },
   {
     id: "yoga",
@@ -74,6 +88,7 @@ export const sportRecommendations: Sport[] = [
     reason: "Builds strength, flexibility, and a calmer relationship with your body.",
     difficulty: "Beginner",
     why: "You ranked stress-reduction high. Yoga is the most direct path: it builds physical strength while training your nervous system to relax.",
+    focusAreaPriorities: ["balance_flexibility", "shoulder_mobility", "core_rotational", "full_body_strength"],
   },
 ];
 
@@ -90,6 +105,18 @@ export type Exercise = {
   weightUnit?: "kg" | "lbs";
   supportsRepCount?: boolean; // can MediaPipe/voice count this exercise?
   poseType?: "squat" | "pushup" | "lunge" | "bridge"; // for pose detection
+  
+  trackingMode: TrackingMode;
+  focusAreas: FocusArea[];
+
+  // interval-mode only (optional, present when trackingMode === "interval")
+  intervalRounds?: number;
+  workSeconds?: number;
+  restSeconds?: number;
+
+  // distance-mode only (optional, present when trackingMode === "distance")
+  targetDurationMinutes?: number;
+  targetDistanceKm?: number;
 };
 
 export type Workout = {
@@ -122,6 +149,8 @@ export const todayWorkout: Workout = {
       weightUnit: "kg",
       supportsRepCount: true,
       poseType: "squat",
+      trackingMode: "rep",
+      focusAreas: ["full_body_strength", "lower_endurance"],
     },
     {
       id: "e2",
@@ -135,6 +164,8 @@ export const todayWorkout: Workout = {
       defaultWeight: undefined,
       supportsRepCount: true,
       poseType: "bridge",
+      trackingMode: "rep",
+      focusAreas: ["full_body_strength", "core_rotational"],
     },
     {
       id: "e3",
@@ -148,6 +179,8 @@ export const todayWorkout: Workout = {
       defaultWeight: undefined,
       supportsRepCount: true,
       poseType: "lunge",
+      trackingMode: "rep",
+      focusAreas: ["lower_endurance", "full_body_strength"],
     },
     {
       id: "e4",
@@ -159,6 +192,8 @@ export const todayWorkout: Workout = {
       instructions: "Stand tall, rise onto balls of feet, lower under control.",
       defaultWeight: undefined,
       supportsRepCount: false,
+      trackingMode: "rep",
+      focusAreas: ["lower_endurance"],
     },
     {
       id: "e5",
@@ -166,11 +201,33 @@ export const todayWorkout: Workout = {
       sets: 3,
       reps: 30,
       rest: 45,
-      tip: "Reps are seconds — keep hips level.",
+      tip: "Hold duration is in seconds — keep hips level.",
       instructions: "Forearms down, body straight from heels to head, brace the core.",
       defaultWeight: undefined,
       supportsRepCount: false,
+      trackingMode: "hold",
+      focusAreas: ["core_rotational", "full_body_strength"],
     },
+    {
+      id: "ex_lateral_shuttle",
+      name: "Lateral Shuttle Run",
+      sets: 1, reps: 0, rest: 0,
+      tip: "Stay low and push off your outside foot.",
+      instructions: "Shuffle side to side between two markers. Keep your chest up.",
+      trackingMode: "interval",
+      focusAreas: ["agility", "cardio_endurance"],
+      intervalRounds: 2, workSeconds: 5, restSeconds: 5,
+    },
+    {
+      id: "ex_easy_jog",
+      name: "Easy Jog",
+      sets: 1, reps: 1, rest: 0,
+      tip: "Keep a conversational pace.",
+      instructions: "Jog at a relaxed, steady effort.",
+      trackingMode: "distance",
+      focusAreas: ["cardio_endurance", "lower_endurance"],
+      targetDurationMinutes: 20,
+    }
   ],
 };
 
@@ -566,6 +623,8 @@ export const recoveryWorkout: Workout = {
       tip: "Move slowly, breathe with each transition.",
       instructions: "On hands and knees, alternate between arching and rounding your spine.",
       supportsRepCount: false,
+      trackingMode: "rep",
+      focusAreas: ["balance_flexibility"],
     },
     {
       id: "r2",
@@ -573,9 +632,11 @@ export const recoveryWorkout: Workout = {
       sets: 2,
       reps: 45,
       rest: 20,
-      tip: "Reps are seconds per side.",
+      tip: "Hold duration is in seconds per side.",
       instructions: "Sit with both legs at 90° angles, hold each side.",
       supportsRepCount: false,
+      trackingMode: "hold",
+      focusAreas: ["balance_flexibility", "shoulder_mobility"],
     },
     {
       id: "r3",
@@ -586,6 +647,133 @@ export const recoveryWorkout: Workout = {
       tip: "Breathe into your lower back.",
       instructions: "Kneel, sit hips to heels, arms extended forward or alongside body.",
       supportsRepCount: false,
+      trackingMode: "hold",
+      focusAreas: ["balance_flexibility"],
     },
   ],
 };
+
+export const exerciseCatalog: Exercise[] = [
+  ...todayWorkout.exercises,
+  ...recoveryWorkout.exercises,
+  {
+    id: "ex_lateral_shuttle",
+    name: "Lateral Shuttle Run",
+    sets: 1, reps: 0, rest: 0,
+    tip: "Stay low and push off your outside foot.",
+    instructions: "Shuffle side to side between two markers. Keep your chest up.",
+    trackingMode: "interval",
+    focusAreas: ["agility", "cardio_endurance"],
+    intervalRounds: 4, workSeconds: 30, restSeconds: 15,
+  },
+  {
+    id: "ex_jump_rope",
+    name: "Jump Rope Intervals",
+    sets: 1, reps: 0, rest: 0,
+    tip: "Stay light on your feet, use your wrists.",
+    instructions: "Jump rope at a steady pace.",
+    trackingMode: "interval",
+    focusAreas: ["cardio_endurance", "lower_endurance"],
+    intervalRounds: 5, workSeconds: 40, restSeconds: 20,
+  },
+  {
+    id: "ex_side_plank",
+    name: "Side Plank",
+    sets: 2, reps: 30, rest: 30,
+    tip: "Hold duration is in seconds per side. Keep your body in a straight line.",
+    instructions: "Support yourself on one forearm and the side of your foot.",
+    trackingMode: "hold",
+    focusAreas: ["core_rotational"],
+  },
+  {
+    id: "ex_shoulder_flow",
+    name: "Shoulder Mobility Flow",
+    sets: 1, reps: 45, rest: 0,
+    tip: "Move smoothly through your full range of motion.",
+    instructions: "Perform arm circles and pass-throughs.",
+    trackingMode: "hold",
+    focusAreas: ["shoulder_mobility", "balance_flexibility"],
+  },
+  {
+    id: "ex_easy_jog",
+    name: "Easy Jog",
+    sets: 1, reps: 1, rest: 0,
+    tip: "Keep a conversational pace.",
+    instructions: "Jog at a relaxed, steady effort.",
+    trackingMode: "distance",
+    focusAreas: ["cardio_endurance", "lower_endurance"],
+    targetDurationMinutes: 20,
+  },
+  {
+    id: "ex_steady_swim",
+    name: "Steady Swim",
+    sets: 1, reps: 1, rest: 0,
+    tip: "Focus on your breathing rhythm.",
+    instructions: "Swim continuously at a moderate pace.",
+    trackingMode: "distance",
+    focusAreas: ["cardio_endurance", "shoulder_mobility"],
+    targetDurationMinutes: 30, targetDistanceKm: 0.5,
+  },
+  {
+    id: "ex_hip_hinge",
+    name: "Hip Hinge Drill",
+    sets: 3, reps: 12, rest: 30,
+    tip: "Push your hips back to the wall.",
+    instructions: "Keep your back straight and hinge at the hips.",
+    trackingMode: "rep",
+    focusAreas: ["lower_endurance", "full_body_strength"],
+  },
+  {
+    id: "ex_squat_jump",
+    name: "Squat Jump",
+    sets: 1, reps: 0, rest: 0,
+    tip: "Land softly to protect your knees.",
+    instructions: "Explode up from a squat, land with bent knees.",
+    trackingMode: "interval",
+    focusAreas: ["agility", "lower_endurance"],
+    intervalRounds: 4, workSeconds: 20, restSeconds: 20,
+  }
+];
+
+// MOCK ONLY — this simulates what the Spring Boot backend will eventually do:
+// select exercises from the catalog whose focusAreas overlap with the
+// user's picked sport's focusAreaPriorities, and assemble a daily workout.
+// Replace this with a real API call (GET /api/workouts/today) later.
+export function generateMockWorkoutForSport(sportId: string): Workout {
+  const sport = sportRecommendations.find(s => s.id === sportId);
+  if (!sport) return todayWorkout;
+
+  const priorities = sport.focusAreaPriorities;
+  
+  // Find exercises matching the top priorities
+  // Simple mock algorithm: get all exercises that share at least one focus area
+  // Sort them so those with top priorities come first, then take top 5
+  const scoredExercises = exerciseCatalog.map(ex => {
+    let score = 0;
+    ex.focusAreas.forEach(fa => {
+      const idx = priorities.indexOf(fa);
+      if (idx !== -1) {
+        // Higher priority (lower index) gives more points
+        score += (priorities.length - idx);
+      }
+    });
+    return { ex, score };
+  }).filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const selectedExercises = scoredExercises.slice(0, 5).map(item => item.ex);
+
+  // If no match found, fallback to todayWorkout
+  if (selectedExercises.length === 0) {
+    return todayWorkout;
+  }
+
+  return {
+    id: `w_mock_${sportId}`,
+    title: `${sport.name} Conditioning`,
+    duration: 30, 
+    difficulty: "Regular",
+    adapted: false,
+    exercises: selectedExercises,
+  };
+}

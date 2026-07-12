@@ -19,6 +19,9 @@ export type SetLogEntry = {
   reps: number;
   weight?: number;
   completedAt: string;
+  // distance-mode fields
+  durationMin?: number;
+  distanceKm?: number;
 };
 
 export type RepCounterMode = "camera" | "voice" | "manual";
@@ -38,6 +41,18 @@ export type WorkoutSessionState = {
   liveRepCount: number;
   injuryPaused: boolean;
   sessionStartedAt: string | null;
+
+  // interval-mode session state
+  intervalCurrentRound: number;
+  intervalPhase: "work" | "rest" | null;
+  intervalSecondsRemaining: number;
+
+  // hold-mode session state
+  holdSecondsRemaining: number;
+  holdActive: boolean;
+
+  // RPE self-report, keyed by exerciseId, recorded after interval/hold sets
+  rpeLog: Record<string, number>;
 };
 
 // ─── Slice Types ───────────────────────────────────────────────
@@ -98,6 +113,18 @@ export type WorkoutSliceType = {
   resumeFromInjury: () => void;
   substituteExercise: (originalId: string, newExerciseName: string) => void;
   resetWorkoutSession: () => void;
+
+  startHold: (exerciseId: string, seconds: number) => void;
+  tickHoldTimer: () => void;
+  endHold: () => void;
+  
+  startIntervalRound: (exerciseId: string, workSec: number) => void;
+  tickIntervalTimer: () => void;
+  setIntervalPhase: (phase: "work" | "rest" | null, seconds: number, round: number) => void;
+  endInterval: () => void;
+  
+  logRpe: (exerciseId: string, rpe: number) => void;
+  completeDistanceSet: (exerciseId: string, durationMin: number, distanceKm: number) => void;
 };
 
 export type AppState = AppSliceType & OnboardingSliceType & WorkoutSliceType;
