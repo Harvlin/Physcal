@@ -92,6 +92,23 @@ export const sportRecommendations: Sport[] = [
   },
 ];
 
+export type CautionTag =
+  | "deep_knee_flexion"
+  | "high_impact_landing"
+  | "spinal_flexion_load"
+  | "spinal_extension_load"
+  | "overhead_shoulder_load"
+  | "wrist_loading"
+  | "high_cardio_intensity";
+
+export type EquipmentTag = 
+  | "dumbbell" 
+  | "resistance_band" 
+  | "bodyweight_only" 
+  | "mat" 
+  | "cardio_machine" 
+  | "pool_access";
+
 export type Exercise = {
   id: string;
   name: string;
@@ -117,6 +134,9 @@ export type Exercise = {
   // distance-mode only (optional, present when trackingMode === "distance")
   targetDurationMinutes?: number;
   targetDistanceKm?: number;
+
+  cautionTags?: CautionTag[];
+  equipmentNeeded?: EquipmentTag[];
 };
 
 export type Workout = {
@@ -127,6 +147,7 @@ export type Workout = {
   difficulty: "Adjusted" | "Regular" | "Rest";
   adapted: boolean;
   isRestDay?: boolean;
+  appliedAdjustments?: string[];
 };
 
 export const todayWorkout: Workout = {
@@ -151,6 +172,8 @@ export const todayWorkout: Workout = {
       poseType: "squat",
       trackingMode: "rep",
       focusAreas: ["full_body_strength", "lower_endurance"],
+      cautionTags: ["deep_knee_flexion"],
+      equipmentNeeded: ["dumbbell"],
     },
     {
       id: "e2",
@@ -166,6 +189,8 @@ export const todayWorkout: Workout = {
       poseType: "bridge",
       trackingMode: "rep",
       focusAreas: ["full_body_strength", "core_rotational"],
+      cautionTags: [],
+      equipmentNeeded: ["bodyweight_only"],
     },
     {
       id: "e3",
@@ -181,6 +206,8 @@ export const todayWorkout: Workout = {
       poseType: "lunge",
       trackingMode: "rep",
       focusAreas: ["lower_endurance", "full_body_strength"],
+      cautionTags: ["deep_knee_flexion", "high_impact_landing"],
+      equipmentNeeded: [],
     },
     {
       id: "e4",
@@ -194,6 +221,8 @@ export const todayWorkout: Workout = {
       supportsRepCount: false,
       trackingMode: "rep",
       focusAreas: ["lower_endurance"],
+      cautionTags: [],
+      equipmentNeeded: ["bodyweight_only"],
     },
     {
       id: "e5",
@@ -207,6 +236,8 @@ export const todayWorkout: Workout = {
       supportsRepCount: false,
       trackingMode: "hold",
       focusAreas: ["core_rotational", "full_body_strength"],
+      cautionTags: [],
+      equipmentNeeded: ["bodyweight_only"],
     },
     {
       id: "ex_lateral_shuttle",
@@ -217,6 +248,8 @@ export const todayWorkout: Workout = {
       trackingMode: "interval",
       focusAreas: ["agility", "cardio_endurance"],
       intervalRounds: 2, workSeconds: 5, restSeconds: 5,
+      cautionTags: ["high_impact_landing"],
+      equipmentNeeded: [],
     },
     {
       id: "ex_easy_jog",
@@ -227,6 +260,8 @@ export const todayWorkout: Workout = {
       trackingMode: "distance",
       focusAreas: ["cardio_endurance", "lower_endurance"],
       targetDurationMinutes: 20,
+      cautionTags: ["high_impact_landing"],
+      equipmentNeeded: [],
     }
   ],
 };
@@ -249,11 +284,16 @@ export const weeklySessions = [
   { week: "W4", sessions: 3 },
 ];
 
+export type ChatAction =
+  | { type: "adjust_volume"; volumeMultiplier: number; note: string }
+  | { type: "swap_to_recovery" };
+
 export type ChatMessage = {
   id: string;
   role: "user" | "ai";
   text: string;
   ts: string;
+  action?: ChatAction;
 };
 
 export const chatHistory: ChatMessage[] = [
@@ -274,6 +314,7 @@ export const chatHistory: ChatMessage[] = [
     role: "ai",
     text: "That's completely normal after lower body day. I've **adjusted** today's session:\n\n- Volume reduced by 20%\n- Added 5 minutes of stretching\n- Focus on form, not weight\n\nDo you want to proceed or take a rest day instead?",
     ts: "08:14",
+    action: { type: "adjust_volume", volumeMultiplier: 0.8, note: "Volume reduced by 20%" },
   },
   { id: "m4", role: "user", text: "Let's go with the lighter version.", ts: "08:15" },
   {
@@ -578,21 +619,21 @@ export const nudgeHistory: (Nudge & { actedOn: boolean })[] = [
 
 // ─── Weight History ───────────────────────────────────────────────
 
-export type WeightEntry = {
+export type ExerciseLoadEntry = {
   date: string;
   weight: number;
   completedReps: number;
   completedSets: number;
 };
 
-export type ExerciseWeightHistory = {
+export type ExerciseLoadHistory = {
   exerciseId: string;
   exerciseName: string;
   unit: "kg" | "lbs";
-  entries: WeightEntry[];
+  entries: ExerciseLoadEntry[];
 };
 
-export const weightHistory: ExerciseWeightHistory[] = [
+export const exerciseLoadHistory: ExerciseLoadHistory[] = [
   {
     exerciseId: "e1",
     exerciseName: "Goblet Squat",
@@ -625,6 +666,8 @@ export const recoveryWorkout: Workout = {
       supportsRepCount: false,
       trackingMode: "rep",
       focusAreas: ["balance_flexibility"],
+      cautionTags: ["spinal_flexion_load", "spinal_extension_load"],
+      equipmentNeeded: ["mat"],
     },
     {
       id: "r2",
@@ -637,6 +680,8 @@ export const recoveryWorkout: Workout = {
       supportsRepCount: false,
       trackingMode: "hold",
       focusAreas: ["balance_flexibility", "shoulder_mobility"],
+      cautionTags: [],
+      equipmentNeeded: ["mat"],
     },
     {
       id: "r3",
@@ -649,6 +694,8 @@ export const recoveryWorkout: Workout = {
       supportsRepCount: false,
       trackingMode: "hold",
       focusAreas: ["balance_flexibility"],
+      cautionTags: [],
+      equipmentNeeded: ["mat"],
     },
   ],
 };
@@ -776,4 +823,186 @@ export function generateMockWorkoutForSport(sportId: string): Workout {
     adapted: false,
     exercises: selectedExercises,
   };
+}
+
+export type BodyWeightEntry = {
+  date: string;
+  weight: number;
+};
+
+export const bodyWeightHistory: BodyWeightEntry[] = [
+  { date: "2025-04-10", weight: 72.5 },
+  { date: "2025-04-17", weight: 72.1 },
+  { date: "2025-04-24", weight: 71.8 },
+  { date: "2025-05-01", weight: 71.5 },
+  { date: "2025-05-08", weight: 71.2 },
+  { date: "2025-05-15", weight: 71.0 },
+];
+
+export const structuredConditionCautionMap: Record<string, CautionTag[]> = {
+  // Joint issues — maps each sub-option from conditionMeta
+  "Joint issues:Knee":     ["deep_knee_flexion", "high_impact_landing"],
+  "Joint issues:Hip":      ["deep_knee_flexion", "high_impact_landing"],
+  "Joint issues:Shoulder": ["overhead_shoulder_load"],
+  "Joint issues:Wrist":    ["wrist_loading"],
+  "Joint issues:Ankle":    ["high_impact_landing"],
+  // "Joint issues:Other" is intentionally omitted — free-text context, flagged as manual_review
+
+  // Back pain
+  "Back pain:Lower":     ["spinal_flexion_load", "spinal_extension_load"],
+  "Back pain:Upper":     ["spinal_extension_load", "overhead_shoulder_load"],
+  "Back pain:Full back": ["spinal_flexion_load", "spinal_extension_load"],
+
+  // Chronic conditions
+  "Chronic condition:Heart condition": ["high_cardio_intensity"],
+  "Chronic condition:Asthma":          ["high_cardio_intensity"],
+  "Chronic condition:Diabetes":        ["high_cardio_intensity"],
+  // "Chronic condition:Other" is intentionally omitted — free-text, flagged as manual_review
+};
+
+export type AdaptationNote = {
+  exerciseId: string;
+  exerciseName: string;
+  type: "substituted" | "caution" | "manual_review";
+  reason: string;
+};
+
+export function adaptWorkoutForHealthProfile(
+  workout: Workout,
+  healthProfile: any
+): { workout: Workout; adaptationNotes: AdaptationNote[] } {
+  if (!healthProfile.hasConditions || healthProfile.conditions.length === 0) {
+    return { workout, adaptationNotes: [] };
+  }
+
+  const notes: AdaptationNote[] = [];
+  const adaptedWorkout: Workout = { ...workout, exercises: [...workout.exercises] };
+
+  let needsManualReview = false;
+  const manualReviewReasons: string[] = [];
+
+  const activeCautions = new Set<CautionTag>();
+  const activeCautionReasons = new Map<CautionTag, string>();
+
+  healthProfile.conditions.forEach((c: any) => {
+    const conditionValues: string[] = c.details?.values || c.details?.joints || [];
+    const hasOtherJoint = c.type === "Joint issues" && conditionValues.includes("Other");
+    const hasOtherChronic = c.type === "Chronic condition" && conditionValues.includes("Other");
+
+    if (c.avoidances || c.type === "Post-injury" || hasOtherJoint || hasOtherChronic) {
+      needsManualReview = true;
+      manualReviewReasons.push(`Manual review needed for: ${c.type}`);
+    }
+
+    const typePrefix = c.type;
+    
+    if (conditionValues.length > 0) {
+      conditionValues.forEach((v: string) => {
+        // Skip "Other" — it's free-text context, flagged as manual_review above
+        if (v === "Other") return;
+        const key = `${typePrefix}:${v}`;
+        const tags = structuredConditionCautionMap[key];
+        if (tags) {
+          tags.forEach(tag => {
+            activeCautions.add(tag);
+            activeCautionReasons.set(tag, c.severity);
+          });
+        }
+      });
+    } else {
+      const key = typePrefix;
+      const tags = structuredConditionCautionMap[key];
+      if (tags) {
+        tags.forEach(tag => {
+          activeCautions.add(tag);
+          activeCautionReasons.set(tag, c.severity);
+        });
+      }
+    }
+  });
+
+  if (needsManualReview) {
+    notes.push({
+      exerciseId: "global",
+      exerciseName: "All",
+      type: "manual_review",
+      reason: "This condition needs a closer look — exercises aren't auto-adjusted for it yet. Take it easy and modify as needed.",
+    });
+  }
+
+  for (let i = 0; i < adaptedWorkout.exercises.length; i++) {
+    const ex = adaptedWorkout.exercises[i];
+    let conflictTag: CautionTag | null = null;
+    let maxSeverity = "mild";
+
+    if (ex.cautionTags) {
+      for (const tag of ex.cautionTags) {
+        if (activeCautions.has(tag)) {
+          conflictTag = tag;
+          const sev = activeCautionReasons.get(tag);
+          if (sev === "significant") maxSeverity = "significant";
+          else if (sev === "moderate" && maxSeverity !== "significant") maxSeverity = "moderate";
+        }
+      }
+    }
+
+    if (conflictTag) {
+      if (maxSeverity === "mild") {
+        notes.push({
+          exerciseId: ex.id,
+          exerciseName: ex.name,
+          type: "caution",
+          reason: `Proceed with mindfulness due to your health profile.`,
+        });
+      } else {
+        const substitute = exerciseCatalog.find(
+          cEx => cEx.id !== ex.id &&
+          cEx.trackingMode === ex.trackingMode &&
+          cEx.focusAreas.some(fa => ex.focusAreas.includes(fa)) &&
+          (!cEx.cautionTags || !cEx.cautionTags.includes(conflictTag as CautionTag))
+        );
+
+        if (substitute) {
+          adaptedWorkout.exercises[i] = substitute;
+          adaptedWorkout.adapted = true;
+          notes.push({
+            exerciseId: substitute.id,
+            exerciseName: substitute.name,
+            type: "substituted",
+            reason: `Swapped out ${ex.name} to protect your health.`,
+          });
+        } else {
+          notes.push({
+            exerciseId: ex.id,
+            exerciseName: ex.name,
+            type: "caution",
+            reason: `Could not find a substitute. Modify or skip this exercise if it causes discomfort.`,
+          });
+        }
+      }
+    }
+  }
+
+  return { workout: adaptedWorkout, adaptationNotes: notes };
+}
+
+export function filterExercisesByLocation(exercises: Exercise[], location: string): Exercise[] {
+  if (location === "Gym" || location === "Mix of all" || !location) return exercises;
+  
+  return exercises.filter(ex => {
+    const eq = ex.equipmentNeeded || [];
+    
+    if (location === "Home") {
+      const needsGymEq = eq.some(e => e === "dumbbell" || e === "resistance_band" || e === "cardio_machine" || e === "pool_access");
+      if (needsGymEq && !eq.includes("bodyweight_only")) return false;
+      return true;
+    }
+    
+    if (location === "Outdoors") {
+      if (eq.includes("pool_access") || eq.includes("cardio_machine")) return false;
+      return true;
+    }
+    
+    return true;
+  });
 }

@@ -5,7 +5,7 @@ import {
   ArrowLeft, Check, ChevronDown, ChevronUp, Camera, Zap,
   AlertTriangle, Clock, Dumbbell, Flame, RefreshCw
 } from "lucide-react";
-import { todayWorkout, recoveryWorkout, weightHistory, motivationalCues, type Exercise } from "@/lib/mock-data";
+import { todayWorkout, recoveryWorkout, exerciseLoadHistory, motivationalCues, type Exercise } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
 import { getPersonalRecord, detectPR } from "@/lib/pr-utils";
@@ -31,11 +31,11 @@ export const Route = createFileRoute("/coach/workout/$sessionId/")({
   component: WorkoutSession,
 });
 
-function getSuggestedWeight(exerciseId: string): number | undefined {
-  const history = weightHistory.find((w) => w.exerciseId === exerciseId);
+function getSuggestedWeight(exerciseId: string, exercises: Exercise[]): number | undefined {
+  const history = exerciseLoadHistory.find((w) => w.exerciseId === exerciseId);
   if (!history || history.entries.length === 0) return undefined;
   const last = history.entries[history.entries.length - 1];
-  const exercise = todayWorkout.exercises.find((e) => e.id === exerciseId);
+  const exercise = exercises.find((e) => e.id === exerciseId);
   if (!exercise) return last.weight;
   const completedAll = last.completedSets >= exercise.sets && last.completedReps >= exercise.reps;
   if (completedAll) return last.weight + (last.weight >= 15 ? 1 : 0.5);
@@ -80,14 +80,17 @@ function WorkoutSession() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [substituteSheetOpen, setSubstituteSheetOpen] = useState(false);
 
+  const todaysPlan = useApp((s) => s.todaysPlan) || todayWorkout;
+  const weightUnit = useApp((s) => s.weightUnit);
+
   const substituted = session.substitutedExercises;
-  const exercises = (isRecoveryMode ? recoveryWorkout.exercises : todayWorkout.exercises).map((ex) => {
+  const exercises = (isRecoveryMode ? recoveryWorkout.exercises : todaysPlan.exercises).map((ex) => {
     if (substituted[ex.id]) {
       return { ...ex, name: substituted[ex.id] };
     }
     return ex;
   });
-  const workoutTitle = isRecoveryMode ? recoveryWorkout.title : todayWorkout.title;
+  const workoutTitle = isRecoveryMode ? recoveryWorkout.title : todaysPlan.title;
 
   // Init session on mount + preload lazy chunks immediately in background
   useEffect(() => {
@@ -173,14 +176,14 @@ function WorkoutSession() {
         });
         
         // Push to mock data so it doesn't trigger again for the same weight in this session
-        const history = weightHistory.find((h) => h.exerciseId === activeExercise.id);
+        const history = exerciseLoadHistory.find((h) => h.exerciseId === activeExercise.id);
         if (history) {
           history.entries.push({ date: new Date().toISOString(), weight, completedReps: reps, completedSets: 1 });
         } else {
-          weightHistory.push({
+          exerciseLoadHistory.push({
             exerciseId: activeExercise.id,
             exerciseName: activeExercise.name,
-            unit: activeExercise.weightUnit || "kg",
+            unit: weightUnit,
             entries: [{ date: new Date().toISOString(), weight, completedReps: reps, completedSets: 1 }]
           });
         }
@@ -217,7 +220,7 @@ function WorkoutSession() {
             <div className="text-xs uppercase tracking-widest font-bold mb-3" style={{ color: c.violet }}>Get ready</div>
             <h1 className="text-4xl font-extrabold mb-2">{workoutTitle}</h1>
             <p className="font-medium mb-8" style={{ color: c.textSecondary }}>
-              {(isRecoveryMode ? recoveryWorkout : todayWorkout).duration} min · {exercises.length} exercises
+              {(isRecoveryMode ? recoveryWorkout : todaysPlan).duration} min · {exercises.length} exercises
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
@@ -229,9 +232,16 @@ function WorkoutSession() {
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm">{e.name}</div>
+                  <div className="font-bold text-sm flex items-center gap-2">
+                    {e.name}
+                    {(!!substituted[e.id] || (!isRecoveryMode && !todayWorkout.exercises.some(orig => orig.id === e.id))) && (
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm" style={{ background: c.violetBg, color: c.violet }}>
+                        Substituted
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs font-medium mt-0.5" style={{ color: c.textTertiary }}>
-                    {e.trackingMode === "rep" && `${e.sets}×${e.reps} ${e.defaultWeight ? `· ${e.defaultWeight} ${e.weightUnit || "kg"}` : ""}`}
+                    {e.trackingMode === "rep" && `${e.sets}×${e.reps} ${e.defaultWeight ? `· ${e.defaultWeight} ${weightUnit}` : ""}`}
                     {e.trackingMode === "hold" && `${e.sets}× ${e.reps}s hold`}
                     {e.trackingMode === "interval" && `${e.intervalRounds} rounds · ${e.workSeconds}s on`}
                     {e.trackingMode === "distance" && `~${e.targetDurationMinutes} min`}
@@ -332,7 +342,14 @@ function WorkoutSession() {
             {/* Exercise header */}
             <div className="flex items-start justify-between mb-1">
               <div className="flex flex-col gap-1 pr-2">
-                <h2 className="text-[26px] font-extrabold leading-tight">{activeExercise.name}</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-[26px] font-extrabold leading-tight">{activeExercise.name}</h2>
+                  {(!!substituted[activeExercise.id] || (!isRecoveryMode && !todayWorkout.exercises.some(orig => orig.id === activeExercise.id))) && (
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-violet-500/10 text-violet-500 border border-violet-500/20">
+                      Substituted
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setSubstituteSheetOpen(true)}
                   className="flex items-center gap-1.5 text-xs font-bold transition-colors w-fit hover:opacity-80"
@@ -363,7 +380,7 @@ function WorkoutSession() {
                     className="flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded-md"
                     style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}44` }}
                   >
-                    🏆 PR: {getPersonalRecord(activeExercise.id)}{activeExercise.weightUnit || "kg"}
+                    🏆 PR: {getPersonalRecord(activeExercise.id)}{weightUnit}
                   </span>
                 </>
               )}
@@ -398,7 +415,7 @@ function WorkoutSession() {
                 <WeightSelector
                   exercise={activeExercise}
                   currentWeight={currentWeight}
-                  suggestedWeight={getSuggestedWeight(activeExercise.id)}
+                  suggestedWeight={getSuggestedWeight(activeExercise.id, exercises)}
                   onWeightChange={(w) => setUsedWeight(activeExercise.id, w)}
                 />
               </div>

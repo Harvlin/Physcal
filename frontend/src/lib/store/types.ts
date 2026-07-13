@@ -14,6 +14,8 @@ export type HealthProfile = {
 
 // ─── Workout Session Types ───────────────────────────────────────
 
+import type { Workout, ChatAction } from "../mock-data";
+
 export type SetLogEntry = {
   set: number;
   reps: number;
@@ -74,6 +76,16 @@ export type AppSliceType = {
   toggleHealthPanel: () => void;
 
   healthProfile: HealthProfile;
+
+  todaysPlan: Workout | null;
+  setTodaysPlan: (w: Workout) => void;
+  applyChatAction: (action: ChatAction) => void;
+
+  bodyWeightGoal: { current: number | null; goal: number | null } | null;
+  setBodyWeightGoal: (goal: { current: number | null; goal: number | null }) => void;
+
+  weightUnit: "kg" | "lbs";
+  setWeightUnit: (unit: "kg" | "lbs") => void;
 };
 
 export type OnboardingSliceType = {

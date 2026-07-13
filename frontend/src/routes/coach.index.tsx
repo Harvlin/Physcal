@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { CheckinDot } from "@/components/CheckinDot";
-import { todayWorkout, weekOverview } from "@/lib/mock-data";
+import { todayWorkout, weekOverview, adaptWorkoutForHealthProfile } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { WorkoutCalendar, type CalendarDay } from "@/components/WorkoutCalendar";
@@ -58,6 +58,10 @@ function CoachPage() {
   const showCheckin = !checkinDone && !collapsed;
   const allFilled = !Object.values(c_state).some((v) => v === 0);
   const c = useColors();
+  
+  const plan = useApp(s => s.todaysPlan) || todayWorkout;
+  const profile = useApp(s => s.healthProfile);
+  const hasManualReview = adaptWorkoutForHealthProfile(todayWorkout, profile).adaptationNotes.some(n => n.type === "manual_review");
 
   return (
     <AppShell>
@@ -135,25 +139,51 @@ function CoachPage() {
               className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest"
               style={{ background: c.exuberantBg, color: c.exuberant, border: `1px solid ${c.exuberant}33` }}
             >
-              {todayWorkout.difficulty}
+              {plan.difficulty}
             </span>
           </div>
 
-          {todayWorkout.adapted && (
+          {hasManualReview && (
             <div
-              className="rounded-xl px-4 py-3 flex items-center gap-2 mb-3 text-[13px] font-medium"
+              className="rounded-xl px-4 py-3 flex items-start gap-2 mb-3 text-[13px] font-medium"
+              style={{
+                background: c.sunGlareBg,
+                border: `1px solid ${c.sunGlare}33`,
+                color: c.textPrimary,
+              }}
+            >
+              <Zap size={14} className="mt-0.5 flex-shrink-0" style={{ color: c.sunGlare }} />
+              <div>
+                <strong>Manual review needed:</strong> One or more of your health conditions requires careful consideration. 
+                Exercises are not automatically adjusted for these yet. Please review the health considerations panel.
+              </div>
+            </div>
+          )}
+
+          {plan.adapted && (
+            <div
+              className="rounded-xl px-4 py-3 flex flex-col gap-2 mb-3 text-[13px] font-medium"
               style={{
                 background: c.violetBg,
                 border: `1px solid ${c.violet}33`,
                 color: c.violet,
               }}
             >
-              <Sparkles size={14} /> Plan adjusted based on your check-in
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} /> Plan adjusted for you
+              </div>
+              {plan.appliedAdjustments && plan.appliedAdjustments.length > 0 && (
+                <ul className="list-disc pl-8 space-y-0.5 opacity-90">
+                  {plan.appliedAdjustments.map((adj, i) => (
+                    <li key={i}>{adj}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
           <div className="space-y-2">
-            {todayWorkout.exercises.map((ex) => {
+            {plan.exercises.map((ex) => {
               const isDone = !!done[ex.id];
               const isOpen = expanded === ex.id;
               return (
@@ -235,17 +265,17 @@ function CoachPage() {
             >
               <motion.div
                 style={{ height: "100%", background: c.exuberant, borderRadius: "9999px", boxShadow: `0 0 8px ${c.exuberantBg}` }}
-                animate={{ width: `${(completed / todayWorkout.exercises.length) * 100}%` }}
+                animate={{ width: `${(completed / plan.exercises.length) * 100}%` }}
               />
             </div>
             <span className="text-xs tabular font-semibold" style={{ color: c.textSecondary }}>
-              {completed}/{todayWorkout.exercises.length}
+              {completed}/{plan.exercises.length}
             </span>
           </div>
 
           <Link
             to="/coach/workout/$sessionId"
-            params={{ sessionId: todayWorkout.id }}
+            params={{ sessionId: plan.id }}
             className="mt-5 w-full h-12 flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all font-bold"
             style={{
               background: c.sunGlare,

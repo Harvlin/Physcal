@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ArrowUp, HeartPulse } from "lucide-react";
+import { ChevronLeft, ArrowUp, HeartPulse, Sparkles, RefreshCw } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { motion } from "framer-motion";
 import { ChatBubble } from "@/components/ChatBubble";
-import { chatHistory, suggestedPrompts, type ChatMessage } from "@/lib/mock-data";
+import { chatHistory, suggestedPrompts, type ChatMessage, type ChatAction } from "@/lib/mock-data";
 import { useColors } from "@/hooks/useColors";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/coach/chat")({
   head: () => ({ meta: [{ title: "Coach Chat — Physcal" }] }),
@@ -16,8 +17,10 @@ function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>(chatHistory);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
+  const [appliedActions, setAppliedActions] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const c = useColors();
+  const applyChatAction = useApp((s) => s.applyChatAction);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -31,16 +34,38 @@ function ChatPage() {
     setTyping(true);
     setTimeout(() => {
       setTyping(false);
+      const lower = text.toLowerCase();
+      let action: ChatAction | undefined;
+      if (lower.includes("lighter") || lower.includes("easier") || lower.includes("reduce")) {
+        action = { type: "adjust_volume", volumeMultiplier: 0.8, note: "Volume reduced 20% via coach chat" };
+      } else if (lower.includes("rest") || lower.includes("recovery") || lower.includes("skip")) {
+        action = { type: "swap_to_recovery" };
+      }
       setMessages((m) => [
         ...m,
         {
           id: String(Date.now() + 1),
           role: "ai",
-          text: "Got it. Based on your pattern this week, **recommendations**:\n\n- Rest major muscle groups for 24 hours\n- Do 10 minutes of mobility\n- Extra hydration today\n\nWant me to set up a mobility session?",
+          text: action
+            ? action.type === "adjust_volume"
+              ? "Got it — I've **reduced today's volume by 20%**. Take it steady and focus on form over load."
+              : "Switching you to **Gentle Recovery** mode. Listen to your body today."
+            : "Got it. Based on your pattern this week, **recommendations**:\n\n- Rest major muscle groups for 24 hours\n- Do 10 minutes of mobility\n- Extra hydration today\n\nWant me to set up a mobility session?",
           ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          action,
         },
       ]);
     }, 1100);
+  };
+
+  const handleApplyAction = (msgId: string, action: ChatAction) => {
+    if (appliedActions.has(msgId)) return;
+    applyChatAction(action);
+    setAppliedActions((s) => new Set(s).add(msgId));
+    toast.success(
+      action.type === "adjust_volume" ? "Plan adjusted — volume reduced" : "Switched to recovery mode",
+      { description: "Head to the Coach tab to see your updated workout." }
+    );
   };
 
   return (
@@ -104,7 +129,42 @@ function ChatPage() {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-5 no-scrollbar">
         {messages.map((m) => (
-          <ChatBubble key={m.id} message={m} />
+          <div key={m.id}>
+            <ChatBubble message={m} />
+            {m.role === "ai" && m.action && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.1 }}
+                className="flex justify-start mt-2 ml-1"
+              >
+                {appliedActions.has(m.id) ? (
+                  <span
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
+                    style={{ background: c.chipBg, color: c.textTertiary, border: `1px solid ${c.chipBorder}` }}
+                  >
+                    ✓ Applied to your plan
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleApplyAction(m.id, m.action!)}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-80 active:scale-95"
+                    style={{
+                      background: m.action.type === "swap_to_recovery" ? c.exuberantBg : c.violetBg,
+                      color: m.action.type === "swap_to_recovery" ? c.exuberant : c.violet,
+                      border: `1px solid ${m.action.type === "swap_to_recovery" ? c.exuberant : c.violet}33`,
+                    }}
+                  >
+                    {m.action.type === "adjust_volume" ? (
+                      <><Sparkles size={11} /> Apply to today's plan</>
+                    ) : (
+                      <><RefreshCw size={11} /> Switch to recovery</>
+                    )}
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </div>
         ))}
         {typing && (
           <div

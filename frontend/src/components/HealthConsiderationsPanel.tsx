@@ -4,39 +4,14 @@ import { ShieldAlert, ChevronDown, CheckCircle, AlertTriangle } from "lucide-rea
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
 
-function buildRecs(conditions: ReturnType<typeof useApp.getState>["healthProfile"]["conditions"]) {
-  const recs: string[] = [];
-  const cautions: string[] = [];
-  for (const c of conditions) {
-    if (c.type === "Joint issues") {
-      const joints = (c.details.joints as string[]) ?? [];
-      const j = joints.join(" / ").toLowerCase() || "joints";
-      recs.push(`Low-impact exercises like swimming or cycling are gentle on your ${j}.`);
-      recs.push("Focus on hip hinge patterns with controlled range of motion.");
-      if (joints.includes("Knee"))
-        cautions.push("Avoid deep squats past 90° given your knee condition.");
-      cautions.push("Skip explosive jumping movements for now.");
-    } else if (c.type === "Back pain") {
-      recs.push("Glute bridges and dead bugs build a safe foundation.");
-      cautions.push("Avoid loaded spinal flexion (heavy crunches, weighted toe touches).");
-    } else if (c.type === "Post-injury") {
-      recs.push("Progressive overload — add reps before adding load.");
-      cautions.push("Stop any movement that triggers sharp pain, not just fatigue.");
-    } else if (c.type === "Chronic condition") {
-      recs.push("Lower intensity, longer duration tends to be safest.");
-      cautions.push("Always have water and meds within reach during sessions.");
-    }
-    if (c.avoidances) cautions.push(c.avoidances);
-  }
-  return { recs: [...new Set(recs)].slice(0, 3), cautions: [...new Set(cautions)].slice(0, 3) };
-}
+import { adaptWorkoutForHealthProfile, todayWorkout } from "@/lib/mock-data";
 
 export function HealthConsiderationsPanel() {
   const profile = useApp((s) => s.healthProfile);
   const expanded = useApp((s) => s.healthPanelExpanded);
   const toggle = useApp((s) => s.toggleHealthPanel);
   const c = useColors();
-  const { recs, cautions } = useMemo(() => buildRecs(profile.conditions), [profile]);
+  const { adaptationNotes } = useMemo(() => adaptWorkoutForHealthProfile(todayWorkout, profile), [profile]);
 
   if (!profile.hasConditions || profile.conditions.length === 0) return null;
 
@@ -76,36 +51,43 @@ export function HealthConsiderationsPanel() {
             className="overflow-hidden"
           >
             <div className="px-5 pb-4" style={{ borderTop: `1px solid ${c.exuberant}1A` }}>
-              <div
-                className="text-[11px] uppercase tracking-wider mb-2 mt-3 font-bold flex items-center gap-1.5"
-                style={{ color: c.sunGlare }}
-              >
-                <CheckCircle size={12} /> Recommended for you
-              </div>
-              <ul className="flex flex-col gap-1.5">
-                {recs.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <CheckCircle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.sunGlare }} />
-                    <span style={{ color: c.textSecondary }}>{r}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div
-                className="text-[11px] uppercase tracking-wider mb-2 mt-4 font-bold flex items-center gap-1.5"
-                style={{ color: c.exuberant }}
-              >
-                <AlertTriangle size={12} /> Move mindfully
-              </div>
-              <ul className="flex flex-col gap-1.5">
-                {cautions.map((c_str, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.exuberant }} />
-                    <span style={{ color: c.textSecondary }}>{c_str}</span>
-                  </li>
-                ))}
-              </ul>
-
+              {adaptationNotes.some(n => n.type === "manual_review") && (
+                <div
+                  className="rounded-xl px-3 py-2.5 my-3 text-[12px] font-medium leading-relaxed"
+                  style={{ background: c.sunGlareBg, border: `1px solid ${c.sunGlare}33`, color: c.textPrimary }}
+                >
+                  <strong style={{ color: c.sunGlare }}>Manual review needed:</strong> One of your conditions isn't automatically adapted yet. Please exercise with care.
+                </div>
+              )}
+              {adaptationNotes.filter(n => n.type !== "manual_review").length > 0 && (
+                <>
+                  <div
+                    className="text-[10px] uppercase tracking-wider font-bold mt-3 mb-2"
+                    style={{ color: c.textTertiary }}
+                  >
+                    Exercise adjustments
+                  </div>
+                  <ul className="flex flex-col gap-1.5">
+                    {adaptationNotes.filter(n => n.type !== "manual_review").map((n, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        {n.type === "substituted" ? (
+                          <CheckCircle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.sunGlare }} />
+                        ) : (
+                          <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.exuberant }} />
+                        )}
+                        <span style={{ color: c.textSecondary }}>
+                          <strong style={{ color: c.textPrimary }}>{n.exerciseName}:</strong> {n.reason}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {adaptationNotes.filter(n => n.type !== "manual_review").length === 0 && !adaptationNotes.some(n => n.type === "manual_review") && (
+                <p className="text-sm py-2" style={{ color: c.textSecondary }}>
+                  Your health profile looks good for today's workout!
+                </p>
+              )}
               <div
                 className="mt-4 pt-3 text-xs italic"
                 style={{ borderTop: `1px solid ${c.exuberant}1A`, color: c.textTertiary }}

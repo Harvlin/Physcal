@@ -64,8 +64,16 @@ function OnboardingPage() {
   const onboarding = useApp((s) => s.onboarding);
   const setOnboarding = useApp((s) => s.setOnboarding);
   const resetOnboarding = useApp((s) => s.resetOnboarding);
+  const setBodyWeightGoal = useApp((s) => s.setBodyWeightGoal);
+  const setWeightUnit = useApp((s) => s.setWeightUnit);
   const navigate = useNavigate();
   const c = useColors();
+
+  const finishOnboarding = () => {
+    setWeightUnit(onboarding.weightUnit);
+    setBodyWeightGoal({ current: onboarding.currentWeight, goal: onboarding.goalWeight });
+    resetOnboarding();
+  };
 
   const phrases = [
     "Analyzing your profile...",
@@ -153,7 +161,7 @@ function OnboardingPage() {
           <div className="w-10" />
         )}
         {step === 1 && (
-          <Link to="/dashboard" onClick={() => resetOnboarding()} className="text-sm transition-colors" style={{ color: c.textTertiary }} onMouseEnter={e => e.currentTarget.style.color = c.textPrimary} onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}>
+          <Link to="/dashboard" onClick={() => finishOnboarding()} className="text-sm transition-colors" style={{ color: c.textTertiary }} onMouseEnter={e => e.currentTarget.style.color = c.textPrimary} onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}>
             Skip
           </Link>
         )}
@@ -439,7 +447,7 @@ function OnboardingPage() {
                       sport={sport}
                       onPick={() => {
                         setOnboarding({ pickedSportId: sport.id });
-                        navigate({ to: "/dashboard" }).then(() => resetOnboarding());
+                        navigate({ to: "/dashboard" }).then(() => finishOnboarding());
                       }}
                       c={c}
                     />
@@ -475,7 +483,7 @@ function OnboardingPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate({ to: "/dashboard" }).then(() => resetOnboarding())}
+                  onClick={() => navigate({ to: "/dashboard" }).then(() => finishOnboarding())}
                   className="text-sm underline underline-offset-4 block mx-auto transition-colors"
                   style={{ color: c.textSecondary }}
                   onMouseEnter={e => e.currentTarget.style.color = c.textPrimary}

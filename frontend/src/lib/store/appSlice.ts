@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { AppState, AppSliceType, Theme, HealthProfile } from "./types";
+import { todayWorkout, recoveryWorkout, adaptWorkoutForHealthProfile } from "../mock-data";
 
 const sampleHealth: HealthProfile = {
   hasConditions: true,
@@ -53,4 +54,30 @@ export const createAppSlice: StateCreator<AppState, [], [], AppSliceType> = (set
   toggleHealthPanel: () => set((s) => ({ healthPanelExpanded: !s.healthPanelExpanded })),
 
   healthProfile: sampleHealth,
+
+  todaysPlan: adaptWorkoutForHealthProfile(todayWorkout, sampleHealth).workout,
+  setTodaysPlan: (w) => set({ todaysPlan: w }),
+  applyChatAction: (action) => set((state) => {
+    if (!state.todaysPlan) return state;
+    const p = { ...state.todaysPlan };
+    if (action.type === "adjust_volume") {
+      p.exercises = p.exercises.map(ex => ({
+        ...ex,
+        sets: Math.max(1, Math.round(ex.sets * action.volumeMultiplier)),
+        reps: Math.max(1, Math.round(ex.reps * action.volumeMultiplier)),
+      }));
+      p.appliedAdjustments = [...(p.appliedAdjustments || []), action.note];
+      p.difficulty = "Adjusted";
+      p.adapted = true;
+    } else if (action.type === "swap_to_recovery") {
+      return { todaysPlan: recoveryWorkout };
+    }
+    return { todaysPlan: p };
+  }),
+
+  bodyWeightGoal: null,
+  setBodyWeightGoal: (goal) => set({ bodyWeightGoal: goal }),
+
+  weightUnit: "kg",
+  setWeightUnit: (unit) => set({ weightUnit: unit }),
 });

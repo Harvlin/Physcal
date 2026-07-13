@@ -1,5 +1,6 @@
 import { Minus, Plus, TrendingUp } from "lucide-react";
 import { useColors } from "@/hooks/useColors";
+import { useApp } from "@/lib/store";
 import type { Exercise } from "@/lib/mock-data";
 
 type WeightSelectorProps = {
@@ -16,6 +17,7 @@ export function WeightSelector({
   onWeightChange,
 }: WeightSelectorProps) {
   const c = useColors();
+  const unit = useApp((s) => s.weightUnit);
 
   // Bodyweight exercise — no weight selector needed
   if (exercise.defaultWeight === undefined && currentWeight === undefined) {
@@ -32,7 +34,6 @@ export function WeightSelector({
   }
 
   const weight = currentWeight ?? exercise.defaultWeight ?? 0;
-  const unit = exercise.weightUnit || "kg";
   const step = weight >= 20 ? 1 : 0.5;
 
   const hasSuggestion =

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check, Heart, Clock, Dumbbell, Repeat, TrendingUp } from "lucide-react";
-import { todayWorkout, recoveryWorkout, weightHistory } from "@/lib/mock-data";
+import { todayWorkout, recoveryWorkout, exerciseLoadHistory } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
 import { toast } from "sonner";
