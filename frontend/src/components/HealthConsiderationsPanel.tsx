@@ -11,7 +11,10 @@ export function HealthConsiderationsPanel() {
   const expanded = useApp((s) => s.healthPanelExpanded);
   const toggle = useApp((s) => s.toggleHealthPanel);
   const c = useColors();
-  const { adaptationNotes } = useMemo(() => adaptWorkoutForHealthProfile(todayWorkout, profile), [profile]);
+  const { adaptationNotes } = useMemo(
+    () => adaptWorkoutForHealthProfile(todayWorkout, profile),
+    [profile],
+  );
 
   if (!profile.hasConditions || profile.conditions.length === 0) return null;
 
@@ -26,8 +29,8 @@ export function HealthConsiderationsPanel() {
       <button
         onClick={toggle}
         className="w-full px-5 py-3.5 flex items-center justify-between transition-colors"
-        onMouseEnter={e => (e.currentTarget.style.background = c.exuberantBg)}
-        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        onMouseEnter={(e) => (e.currentTarget.style.background = c.exuberantBg)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         <div className="flex items-center gap-2.5">
           <ShieldAlert size={15} style={{ color: c.exuberant }} />
@@ -51,15 +54,20 @@ export function HealthConsiderationsPanel() {
             className="overflow-hidden"
           >
             <div className="px-5 pb-4" style={{ borderTop: `1px solid ${c.exuberant}1A` }}>
-              {adaptationNotes.some(n => n.type === "manual_review") && (
+              {adaptationNotes.some((n) => n.type === "manual_review") && (
                 <div
                   className="rounded-xl px-3 py-2.5 my-3 text-[12px] font-medium leading-relaxed"
-                  style={{ background: c.sunGlareBg, border: `1px solid ${c.sunGlare}33`, color: c.textPrimary }}
+                  style={{
+                    background: c.sunGlareBg,
+                    border: `1px solid ${c.sunGlare}33`,
+                    color: c.textPrimary,
+                  }}
                 >
-                  <strong style={{ color: c.sunGlare }}>Manual review needed:</strong> One of your conditions isn't automatically adapted yet. Please exercise with care.
+                  <strong style={{ color: c.sunGlare }}>Manual review needed:</strong> One of your
+                  conditions isn't automatically adapted yet. Please exercise with care.
                 </div>
               )}
-              {adaptationNotes.filter(n => n.type !== "manual_review").length > 0 && (
+              {adaptationNotes.filter((n) => n.type !== "manual_review").length > 0 && (
                 <>
                   <div
                     className="text-[10px] uppercase tracking-wider font-bold mt-3 mb-2"
@@ -68,26 +76,38 @@ export function HealthConsiderationsPanel() {
                     Exercise adjustments
                   </div>
                   <ul className="flex flex-col gap-1.5">
-                    {adaptationNotes.filter(n => n.type !== "manual_review").map((n, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        {n.type === "substituted" ? (
-                          <CheckCircle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.sunGlare }} />
-                        ) : (
-                          <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" style={{ color: c.exuberant }} />
-                        )}
-                        <span style={{ color: c.textSecondary }}>
-                          <strong style={{ color: c.textPrimary }}>{n.exerciseName}:</strong> {n.reason}
-                        </span>
-                      </li>
-                    ))}
+                    {adaptationNotes
+                      .filter((n) => n.type !== "manual_review")
+                      .map((n, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          {n.type === "substituted" ? (
+                            <CheckCircle
+                              size={13}
+                              className="flex-shrink-0 mt-0.5"
+                              style={{ color: c.sunGlare }}
+                            />
+                          ) : (
+                            <AlertTriangle
+                              size={13}
+                              className="flex-shrink-0 mt-0.5"
+                              style={{ color: c.exuberant }}
+                            />
+                          )}
+                          <span style={{ color: c.textSecondary }}>
+                            <strong style={{ color: c.textPrimary }}>{n.exerciseName}:</strong>{" "}
+                            {n.reason}
+                          </span>
+                        </li>
+                      ))}
                   </ul>
                 </>
               )}
-              {adaptationNotes.filter(n => n.type !== "manual_review").length === 0 && !adaptationNotes.some(n => n.type === "manual_review") && (
-                <p className="text-sm py-2" style={{ color: c.textSecondary }}>
-                  Your health profile looks good for today's workout!
-                </p>
-              )}
+              {adaptationNotes.filter((n) => n.type !== "manual_review").length === 0 &&
+                !adaptationNotes.some((n) => n.type === "manual_review") && (
+                  <p className="text-sm py-2" style={{ color: c.textSecondary }}>
+                    Your health profile looks good for today's workout!
+                  </p>
+                )}
               <div
                 className="mt-4 pt-3 text-xs italic"
                 style={{ borderTop: `1px solid ${c.exuberant}1A`, color: c.textTertiary }}

@@ -30,13 +30,15 @@ export function SideNav() {
         >
           <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
             <path d="M16 4 L28 28 L22 28 L16 14 L10 28 L4 28 Z" fill="currentColor" />
-            <path d="M11.5 22 L20.5 22" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            <path
+              d="M11.5 22 L20.5 22"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
-        <span
-          className="text-xl font-bold tracking-tight"
-          style={{ color: c.textPrimary }}
-        >
+        <span className="text-xl font-bold tracking-tight" style={{ color: c.textPrimary }}>
           Physcal
         </span>
       </Link>
@@ -59,8 +61,12 @@ export function SideNav() {
                       ? { background: c.sideNavActiveBg, color: c.sideNavActiveColor }
                       : { color: c.sideNavInactive }
                   }
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = c.hoverBg; }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = c.hoverBg;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = "transparent";
+                  }}
                 >
                   <Icon size={18} strokeWidth={active ? 2.5 : 2} />
                   {item.label}
@@ -71,12 +77,11 @@ export function SideNav() {
         </ul>
       </nav>
 
-      <div
-        className="border-t pt-4 space-y-3"
-        style={{ borderColor: c.divider }}
-      >
+      <div className="border-t pt-4 space-y-3" style={{ borderColor: c.divider }}>
         <div className="px-3 flex items-center justify-between">
-          <span className="text-xs font-medium" style={{ color: c.textSecondary }}>Theme</span>
+          <span className="text-xs font-medium" style={{ color: c.textSecondary }}>
+            Theme
+          </span>
           <ThemeToggle />
         </div>
         <div
@@ -84,7 +89,9 @@ export function SideNav() {
           style={{ background: c.sideNavBeta, border: `1px solid ${c.sideNavBetaBorder}` }}
         >
           <Zap size={13} style={{ color: c.sideNavBetaIcon }} />
-          <span className="text-xs font-medium" style={{ color: c.sideNavBetaText }}>Beta build · v0.1</span>
+          <span className="text-xs font-medium" style={{ color: c.sideNavBetaText }}>
+            Beta build · v0.1
+          </span>
         </div>
       </div>
     </aside>

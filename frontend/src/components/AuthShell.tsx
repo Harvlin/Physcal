@@ -17,7 +17,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <div
       className="min-h-dvh font-sans relative overflow-hidden"
       style={{
-        background: `radial-gradient(ellipse 70% 50% at 50% -10%, ${c.sunGlareBg} 0%, transparent 55%), linear-gradient(175deg, ${c.isDark ? '#1E1E1B' : '#FFFFFF'} 0%, ${c.isDark ? '#181816' : '#F4F3EE'} 100%)`,
+        background: `radial-gradient(ellipse 70% 50% at 50% -10%, ${c.sunGlareBg} 0%, transparent 55%), linear-gradient(175deg, ${c.isDark ? "#1E1E1B" : "#FFFFFF"} 0%, ${c.isDark ? "#181816" : "#F4F3EE"} 100%)`,
       }}
     >
       {/* Decorative blobs */}
@@ -60,7 +60,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center px-5 py-12">
         <div className="flex items-center gap-2.5 mb-8" style={{ color: c.sunGlare }}>
           <Logo size={26} />
-          <span className="font-bold text-xl tracking-tight" style={{ color: c.textPrimary }}>Physcal</span>
+          <span className="font-bold text-xl tracking-tight" style={{ color: c.textPrimary }}>
+            Physcal
+          </span>
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.94, y: 12 }}
@@ -99,7 +101,11 @@ export function AuthInput({
 }) {
   return (
     <div className="relative">
-      <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: c.textTertiary }} />
+      <Icon
+        size={15}
+        className="absolute left-3.5 top-1/2 -translate-y-1/2"
+        style={{ color: c.textTertiary }}
+      />
       <input
         type={type}
         placeholder={placeholder}
@@ -111,19 +117,17 @@ export function AuthInput({
         } text-sm outline-none transition-all`}
         style={{
           background: c.inputBg,
-          border: error
-            ? `1px solid ${c.exuberant}99`
-            : `1px solid ${c.inputBorder}`,
+          border: error ? `1px solid ${c.exuberant}99` : `1px solid ${c.inputBorder}`,
           color: c.textPrimary,
           boxShadow: error ? `0 0 0 3px ${c.exuberantBg}` : "none",
         }}
-        onFocus={e => {
+        onFocus={(e) => {
           if (!error) {
             e.currentTarget.style.borderColor = `${c.sunGlare}80`;
             e.currentTarget.style.boxShadow = `0 0 0 3px ${c.sunGlareBg}`;
           }
         }}
-        onBlur={e => {
+        onBlur={(e) => {
           if (!error) {
             e.currentTarget.style.borderColor = c.inputBorder;
             e.currentTarget.style.boxShadow = "none";
@@ -135,12 +139,15 @@ export function AuthInput({
   );
 }
 
-export function AuthLabel({ children, c }: { children: ReactNode; c: ReturnType<typeof useColors> }) {
+export function AuthLabel({
+  children,
+  c,
+}: {
+  children: ReactNode;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
-    <label
-      className="text-xs font-semibold mb-1.5 block"
-      style={{ color: c.textSecondary }}
-    >
+    <label className="text-xs font-semibold mb-1.5 block" style={{ color: c.textSecondary }}>
       {children}
     </label>
   );

@@ -27,7 +27,10 @@ export function ChatBubble({ message }: { message: ChatMessage }) {
           </div>
         )}
         <div
-          className={cn("rounded-2xl px-4 py-3 text-[15px]", isUser ? "rounded-br-sm" : "rounded-bl-sm")}
+          className={cn(
+            "rounded-2xl px-4 py-3 text-[15px]",
+            isUser ? "rounded-br-sm" : "rounded-bl-sm",
+          )}
           style={
             isUser
               ? {
@@ -42,10 +45,7 @@ export function ChatBubble({ message }: { message: ChatMessage }) {
                 }
           }
         >
-          <FormattedText
-            text={message.text}
-            className={isUser ? "text-[#1C1C1A]" : undefined}
-          />
+          <FormattedText text={message.text} className={isUser ? "text-[#1C1C1A]" : undefined} />
         </div>
         <span
           className={cn("text-[10px] px-1 font-medium", isUser ? "text-right" : "")}

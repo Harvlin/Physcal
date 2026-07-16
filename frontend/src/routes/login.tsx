@@ -41,7 +41,9 @@ function LoginPage() {
         animate={shake ? { x: [0, -8, 8, -6, 6, 0] } : {}}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-2xl font-black" style={{ color: c.textPrimary }}>Welcome back</h1>
+        <h1 className="text-2xl font-black" style={{ color: c.textPrimary }}>
+          Welcome back
+        </h1>
         <p className="text-sm mt-1.5 font-medium" style={{ color: c.textTertiary }}>
           Sign in to continue your journey.
         </p>
@@ -86,8 +88,8 @@ function LoginPage() {
                 to="/forgot-password"
                 className="text-xs font-semibold transition-colors"
                 style={{ color: c.textTertiary }}
-                onMouseEnter={e => (e.currentTarget.style.color = c.sunGlare)}
-                onMouseLeave={e => (e.currentTarget.style.color = c.textTertiary)}
+                onMouseEnter={(e) => (e.currentTarget.style.color = c.sunGlare)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = c.textTertiary)}
               >
                 Forgot password?
               </Link>
@@ -136,7 +138,9 @@ function LoginPage() {
 
         <div className="flex items-center gap-3 my-6">
           <span className="flex-1 h-px" style={{ background: c.divider }} />
-          <span className="text-xs font-medium" style={{ color: c.textTertiary }}>or</span>
+          <span className="text-xs font-medium" style={{ color: c.textTertiary }}>
+            or
+          </span>
           <span className="flex-1 h-px" style={{ background: c.divider }} />
         </div>
 
@@ -150,11 +154,11 @@ function LoginPage() {
                 border: `1px solid ${c.chipBorder}`,
                 color: c.textSecondary,
               }}
-              onMouseEnter={e => {
+              onMouseEnter={(e) => {
                 e.currentTarget.style.background = c.hoverBg;
                 e.currentTarget.style.color = c.textPrimary;
               }}
-              onMouseLeave={e => {
+              onMouseLeave={(e) => {
                 e.currentTarget.style.background = c.chipBg;
                 e.currentTarget.style.color = c.textSecondary;
               }}
@@ -166,11 +170,7 @@ function LoginPage() {
 
         <p className="text-sm text-center mt-7" style={{ color: c.textTertiary }}>
           Don't have an account?{" "}
-          <Link
-            to="/signup"
-            className="font-bold transition-colors"
-            style={{ color: c.sunGlare }}
-          >
+          <Link to="/signup" className="font-bold transition-colors" style={{ color: c.sunGlare }}>
             Sign up
           </Link>
         </p>

@@ -22,10 +22,11 @@ function DonePage() {
   // Compute stats from session
   const totalSetsCompleted = Object.values(session.completedSets).reduce((a, b) => a + b, 0);
   const totalRepsCompleted = Object.values(session.setLog).reduce(
-    (acc, logs) => acc + logs.reduce((a, l) => a + l.reps, 0), 0
+    (acc, logs) => acc + logs.reduce((a, l) => a + l.reps, 0),
+    0,
   );
   const exercisesCompleted = todayWorkout.exercises.filter(
-    (ex) => (session.completedSets[ex.id] ?? 0) >= ex.sets
+    (ex) => (session.completedSets[ex.id] ?? 0) >= ex.sets,
   ).length;
   const totalTime = useMemo(() => {
     if (!session.sessionStartedAt) return "—";
@@ -39,7 +40,11 @@ function DonePage() {
     const changes = [];
     const sourceWorkout = session.injuryPaused ? recoveryWorkout : todayWorkout;
     for (const ex of sourceWorkout.exercises) {
-      if (session.usedWeights[ex.id] && ex.defaultWeight && session.usedWeights[ex.id] > ex.defaultWeight) {
+      if (
+        session.usedWeights[ex.id] &&
+        ex.defaultWeight &&
+        session.usedWeights[ex.id] > ex.defaultWeight
+      ) {
         changes.push({
           exerciseId: ex.id,
           exerciseName: session.substitutedExercises?.[ex.id] || ex.name,
@@ -68,7 +73,11 @@ function DonePage() {
             boxShadow: isInjury ? "0 0 40px oklch(0.70 0.14 65 / 0.4)" : `0 0 40px ${c.sunGlareBg}`,
           }}
         >
-          {isInjury ? <Heart size={48} strokeWidth={2.5} style={{ color: "#1C1C1A" }} /> : <Check size={48} strokeWidth={3} style={{ color: "#1C1C1A" }} />}
+          {isInjury ? (
+            <Heart size={48} strokeWidth={2.5} style={{ color: "#1C1C1A" }} />
+          ) : (
+            <Check size={48} strokeWidth={3} style={{ color: "#1C1C1A" }} />
+          )}
         </motion.div>
 
         {/* Headline */}
@@ -90,16 +99,33 @@ function DonePage() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3 w-full mb-6">
-          <StatCard icon={<Repeat size={18} />} label="Sets" value={String(totalSetsCompleted)} c={c} />
-          <StatCard icon={<Dumbbell size={18} />} label="Reps" value={String(totalRepsCompleted)} c={c} />
+          <StatCard
+            icon={<Repeat size={18} />}
+            label="Sets"
+            value={String(totalSetsCompleted)}
+            c={c}
+          />
+          <StatCard
+            icon={<Dumbbell size={18} />}
+            label="Reps"
+            value={String(totalRepsCompleted)}
+            c={c}
+          />
           <StatCard icon={<Clock size={18} />} label="Time" value={totalTime} c={c} />
-          <StatCard icon={<Check size={18} />} label="Exercises" value={`${exercisesCompleted}/${todayWorkout.exercises.length}`} c={c} />
+          <StatCard
+            icon={<Check size={18} />}
+            label="Exercises"
+            value={`${exercisesCompleted}/${todayWorkout.exercises.length}`}
+            c={c}
+          />
         </div>
 
         {/* Weight updates */}
         {weightChanges.length > 0 && (
           <div className="w-full mb-6">
-            <div className="text-sm font-bold mb-3 text-left" style={{ color: c.textSecondary }}>Weight updates</div>
+            <div className="text-sm font-bold mb-3 text-left" style={{ color: c.textSecondary }}>
+              Weight updates
+            </div>
             {weightChanges.map((wc) => (
               <div key={wc.exerciseId} className="card-frosted p-4 mb-2 text-left">
                 <div className="flex items-center gap-2 mb-2">
@@ -111,15 +137,25 @@ function DonePage() {
                 </div>
                 {!weightUpdated[wc.exerciseId] ? (
                   <div className="flex gap-2">
-                    <button onClick={() => setWeightUpdated((p) => ({ ...p, [wc.exerciseId]: true }))} className="flex-1 h-10 rounded-xl text-xs font-bold" style={{ background: c.sunGlare, color: "#1C1C1A" }}>
+                    <button
+                      onClick={() => setWeightUpdated((p) => ({ ...p, [wc.exerciseId]: true }))}
+                      className="flex-1 h-10 rounded-xl text-xs font-bold"
+                      style={{ background: c.sunGlare, color: "#1C1C1A" }}
+                    >
                       Yes, update
                     </button>
-                    <button onClick={() => setWeightUpdated((p) => ({ ...p, [wc.exerciseId]: true }))} className="flex-1 h-10 rounded-xl text-xs font-bold" style={{ border: `1px solid ${c.chipBorder}`, color: c.textSecondary }}>
+                    <button
+                      onClick={() => setWeightUpdated((p) => ({ ...p, [wc.exerciseId]: true }))}
+                      className="flex-1 h-10 rounded-xl text-xs font-bold"
+                      style={{ border: `1px solid ${c.chipBorder}`, color: c.textSecondary }}
+                    >
                       Keep at {wc.oldWeight} {wc.unit}
                     </button>
                   </div>
                 ) : (
-                  <div className="text-xs font-semibold" style={{ color: "oklch(0.52 0.14 152)" }}>✓ Updated</div>
+                  <div className="text-xs font-semibold" style={{ color: "oklch(0.52 0.14 152)" }}>
+                    ✓ Updated
+                  </div>
                 )}
               </div>
             ))}
@@ -128,14 +164,18 @@ function DonePage() {
 
         {/* Feedback */}
         <div className="w-full mb-5">
-          <div className="text-sm font-bold mb-2.5 text-left" style={{ color: c.textSecondary }}>How did that feel?</div>
+          <div className="text-sm font-bold mb-2.5 text-left" style={{ color: c.textSecondary }}>
+            How did that feel?
+          </div>
           <div className="grid grid-cols-3 gap-2">
             {["Too easy", "Just right", "Too hard"].map((f) => (
               <button
                 key={f}
                 onClick={() => {
                   setFeedback(f);
-                  toast.success("Feedback saved!", { description: "We'll adjust your next session." });
+                  toast.success("Feedback saved!", {
+                    description: "We'll adjust your next session.",
+                  });
                 }}
                 className="h-12 rounded-xl text-sm font-semibold transition-all active:scale-95"
                 style={{
@@ -156,7 +196,11 @@ function DonePage() {
           onChange={(e) => setNote(e.target.value)}
           rows={3}
           className="w-full rounded-xl px-4 py-3 text-sm resize-none mb-5 focus:outline-none"
-          style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, color: c.textPrimary }}
+          style={{
+            background: c.chipBg,
+            border: `1px solid ${c.chipBorder}`,
+            color: c.textPrimary,
+          }}
         />
       </div>
 
@@ -165,11 +209,20 @@ function DonePage() {
           to="/dashboard"
           onClick={() => resetWorkoutSession()}
           className="w-full h-[52px] rounded-full font-bold text-[15px] flex items-center justify-center hover:opacity-90 active:scale-[0.98] transition-all"
-          style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 24px ${c.sunGlareBg}` }}
+          style={{
+            background: c.sunGlare,
+            color: "#1C1C1A",
+            boxShadow: `0 0 24px ${c.sunGlareBg}`,
+          }}
         >
           Save & finish
         </Link>
-        <Link to="/dashboard" onClick={() => resetWorkoutSession()} className="block text-center text-sm font-semibold" style={{ color: c.textTertiary }}>
+        <Link
+          to="/dashboard"
+          onClick={() => resetWorkoutSession()}
+          className="block text-center text-sm font-semibold"
+          style={{ color: c.textTertiary }}
+        >
           Back to home
         </Link>
       </div>
@@ -177,12 +230,29 @@ function DonePage() {
   );
 }
 
-function StatCard({ icon, label, value, c }: { icon: React.ReactNode; label: string; value: string; c: ReturnType<typeof useColors> }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  c,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
     <div className="card-frosted p-4 text-left">
-      <div className="flex items-center gap-2 mb-2" style={{ color: c.textTertiary }}>{icon}</div>
+      <div className="flex items-center gap-2 mb-2" style={{ color: c.textTertiary }}>
+        {icon}
+      </div>
       <div className="text-2xl font-extrabold tabular-nums">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider font-bold mt-0.5" style={{ color: c.textTertiary }}>{label}</div>
+      <div
+        className="text-[10px] uppercase tracking-wider font-bold mt-0.5"
+        style={{ color: c.textTertiary }}
+      >
+        {label}
+      </div>
     </div>
   );
 }

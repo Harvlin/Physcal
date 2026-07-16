@@ -16,11 +16,11 @@ export function ThemeToggle() {
         border: `1px solid ${c.inputBorder}`,
         background: c.chipBg,
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         e.currentTarget.style.background = c.hoverBg;
         e.currentTarget.style.color = c.textPrimary;
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         e.currentTarget.style.background = c.chipBg;
         e.currentTarget.style.color = c.textTertiary;
       }}

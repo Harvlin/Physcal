@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ArrowUp, HeartPulse, Sparkles, RefreshCw } from "lucide-react";
+import { ChevronLeft, ArrowUp, HeartPulse, Sparkles, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { motion } from "framer-motion";
 import { ChatBubble } from "@/components/ChatBubble";
@@ -21,6 +21,8 @@ function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const c = useColors();
   const applyChatAction = useApp((s) => s.applyChatAction);
+  const checkinDoneToday = useApp((s) => s.checkinDoneToday);
+  const setCheckinDone = useApp((s) => s.setCheckinDone);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -35,22 +37,45 @@ function ChatPage() {
     setTimeout(() => {
       setTyping(false);
       const lower = text.toLowerCase();
+
+      // MOCK NLP PLACEHOLDER — This keyword matching is a simplified stand-in for
+      // real Natural Language Understanding (NLU). In production, this will be
+      // replaced by a call to a backend language model that understands intent,
+      // context, and nuance far beyond simple substring checks.
       let action: ChatAction | undefined;
       if (lower.includes("lighter") || lower.includes("easier") || lower.includes("reduce")) {
-        action = { type: "adjust_volume", volumeMultiplier: 0.8, note: "Volume reduced 20% via coach chat" };
+        action = {
+          type: "adjust_volume",
+          volumeMultiplier: 0.8,
+          note: "Volume reduced 20% via coach chat",
+        };
       } else if (lower.includes("rest") || lower.includes("recovery") || lower.includes("skip")) {
         action = { type: "swap_to_recovery" };
+      } else if (
+        // MOCK NLP: Detects fatigue/soreness reports to prompt a check-in write.
+        // Real NLU would extract sentiment & dimensions (energy, soreness, mood) from freeform text.
+        lower.includes("sore") ||
+        lower.includes("tired") ||
+        lower.includes("exhausted") ||
+        lower.includes("fatigued") ||
+        lower.includes("drained")
+      ) {
+        action = { type: "checkin_log" };
       }
+
       setMessages((m) => [
         ...m,
         {
           id: String(Date.now() + 1),
           role: "ai",
-          text: action
-            ? action.type === "adjust_volume"
+          text:
+            action?.type === "adjust_volume"
               ? "Got it — I've **reduced today's volume by 20%**. Take it steady and focus on form over load."
-              : "Switching you to **Gentle Recovery** mode. Listen to your body today."
-            : "Got it. Based on your pattern this week, **recommendations**:\n\n- Rest major muscle groups for 24 hours\n- Do 10 minutes of mobility\n- Extra hydration today\n\nWant me to set up a mobility session?",
+              : action?.type === "swap_to_recovery"
+                ? "Switching you to **Gentle Recovery** mode. Listen to your body today."
+                : action?.type === "checkin_log"
+                  ? "Sounds like your body is sending a signal. Want me to **log this as your check-in** for today so we can track patterns?"
+                  : "Got it. Based on your pattern this week, **recommendations**:\n\n- Rest major muscle groups for 24 hours\n- Do 10 minutes of mobility\n- Extra hydration today\n\nWant me to set up a mobility session?",
           ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           action,
         },
@@ -60,12 +85,25 @@ function ChatPage() {
 
   const handleApplyAction = (msgId: string, action: ChatAction) => {
     if (appliedActions.has(msgId)) return;
-    applyChatAction(action);
-    setAppliedActions((s) => new Set(s).add(msgId));
-    toast.success(
-      action.type === "adjust_volume" ? "Plan adjusted — volume reduced" : "Switched to recovery mode",
-      { description: "Head to the Coach tab to see your updated workout." }
-    );
+    if (action.type === "checkin_log") {
+      // Require explicit confirmation before logging — never silently overwrite a same-day form check-in.
+      setCheckinDone(true);
+      setAppliedActions((s) => new Set(s).add(msgId));
+      toast.success("Check-in logged from chat", {
+        description: checkinDoneToday
+          ? "Combined with your earlier form check-in (marked as 'both')."
+          : "Logged as your check-in for today (source: chat).",
+      });
+    } else {
+      applyChatAction(action);
+      setAppliedActions((s) => new Set(s).add(msgId));
+      toast.success(
+        action.type === "adjust_volume"
+          ? "Plan adjusted — volume reduced"
+          : "Switched to recovery mode",
+        { description: "Head to the Coach tab to see your updated workout." },
+      );
+    }
   };
 
   return (
@@ -90,8 +128,8 @@ function ChatPage() {
           to="/coach"
           className="w-10 h-10 -ml-2 grid place-items-center rounded-xl transition-colors"
           style={{ color: c.textSecondary }}
-          onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           aria-label="Back"
         >
           <ChevronLeft size={20} />
@@ -110,7 +148,10 @@ function ChatPage() {
           />
         </div>
         <div className="flex-1">
-          <div className="font-bold text-sm flex items-center gap-2" style={{ color: c.textPrimary }}>
+          <div
+            className="font-bold text-sm flex items-center gap-2"
+            style={{ color: c.textPrimary }}
+          >
             Physcal Coach
             <span
               className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"
@@ -141,10 +182,30 @@ function ChatPage() {
                 {appliedActions.has(m.id) ? (
                   <span
                     className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
-                    style={{ background: c.chipBg, color: c.textTertiary, border: `1px solid ${c.chipBorder}` }}
+                    style={{
+                      background: c.chipBg,
+                      color: c.textTertiary,
+                      border: `1px solid ${c.chipBorder}`,
+                    }}
                   >
-                    ✓ Applied to your plan
+                    <CheckCircle2 size={11} />
+                    {m.action.type === "checkin_log" ? "Check-in logged" : "Applied to your plan"}
                   </span>
+                ) : m.action.type === "checkin_log" ? (
+                  // Check-in confirmation chip — always requires explicit tap before writing to state.
+                  // This is the reconciliation gate: prevents silent overwrites of a same-day form check-in.
+                  <button
+                    onClick={() => handleApplyAction(m.id, m.action!)}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all hover:opacity-80 active:scale-95"
+                    style={{
+                      background: c.sunGlareBg,
+                      color: c.sunGlare,
+                      border: `1px solid ${c.sunGlare}33`,
+                    }}
+                  >
+                    <CheckCircle2 size={11} />
+                    {checkinDoneToday ? "Merge with today's check-in" : "Log as today's check-in"}
+                  </button>
                 ) : (
                   <button
                     onClick={() => handleApplyAction(m.id, m.action!)}
@@ -156,9 +217,13 @@ function ChatPage() {
                     }}
                   >
                     {m.action.type === "adjust_volume" ? (
-                      <><Sparkles size={11} /> Apply to today's plan</>
+                      <>
+                        <Sparkles size={11} /> Apply to today's plan
+                      </>
                     ) : (
-                      <><RefreshCw size={11} /> Switch to recovery</>
+                      <>
+                        <RefreshCw size={11} /> Switch to recovery
+                      </>
                     )}
                   </button>
                 )}
@@ -205,12 +270,12 @@ function ChatPage() {
                   color: c.textSecondary,
                   border: `1px solid ${c.chipBorder}`,
                 }}
-                onMouseEnter={e => {
+                onMouseEnter={(e) => {
                   e.currentTarget.style.background = c.exuberantBg;
                   e.currentTarget.style.color = c.exuberant;
                   e.currentTarget.style.borderColor = `${c.exuberant}40`;
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e) => {
                   e.currentTarget.style.background = c.chipBg;
                   e.currentTarget.style.color = c.textSecondary;
                   e.currentTarget.style.borderColor = c.chipBorder;
@@ -238,11 +303,11 @@ function ChatPage() {
               border: `1px solid ${c.inputBorder}`,
               color: c.textPrimary,
             }}
-            onFocus={e => {
+            onFocus={(e) => {
               e.currentTarget.style.borderColor = `${c.violet}59`;
               e.currentTarget.style.boxShadow = `0 0 0 3px ${c.violet}1A`;
             }}
-            onBlur={e => {
+            onBlur={(e) => {
               e.currentTarget.style.borderColor = c.inputBorder;
               e.currentTarget.style.boxShadow = "none";
             }}
@@ -251,7 +316,11 @@ function ChatPage() {
             type="submit"
             disabled={!input.trim()}
             className="w-12 h-12 shrink-0 rounded-full grid place-items-center disabled:opacity-30 hover:opacity-90 active:scale-90 transition-all"
-            style={{ background: c.exuberant, color: "#F2F0E9", boxShadow: input.trim() ? `0 0 20px ${c.exuberant}4D` : "none" }}
+            style={{
+              background: c.exuberant,
+              color: "#F2F0E9",
+              boxShadow: input.trim() ? `0 0 20px ${c.exuberant}4D` : "none",
+            }}
             aria-label="Send"
           >
             <ArrowUp size={20} strokeWidth={2.5} />

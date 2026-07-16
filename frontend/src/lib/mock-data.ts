@@ -80,7 +80,12 @@ export const sportRecommendations: Sport[] = [
     reason: "Full-body strength with zero joint impact — ideal for steady, sustainable progress.",
     difficulty: "Beginner",
     why: "Swimming gives you cardio and strength without weight-bearing stress. Perfect for someone starting out who wants to feel capable, not exhausted.",
-    focusAreaPriorities: ["shoulder_mobility", "core_rotational", "cardio_endurance", "full_body_strength"],
+    focusAreaPriorities: [
+      "shoulder_mobility",
+      "core_rotational",
+      "cardio_endurance",
+      "full_body_strength",
+    ],
   },
   {
     id: "yoga",
@@ -88,9 +93,146 @@ export const sportRecommendations: Sport[] = [
     reason: "Builds strength, flexibility, and a calmer relationship with your body.",
     difficulty: "Beginner",
     why: "You ranked stress-reduction high. Yoga is the most direct path: it builds physical strength while training your nervous system to relax.",
-    focusAreaPriorities: ["balance_flexibility", "shoulder_mobility", "core_rotational", "full_body_strength"],
+    focusAreaPriorities: [
+      "balance_flexibility",
+      "shoulder_mobility",
+      "core_rotational",
+      "full_body_strength",
+    ],
+  },
+  {
+    id: "running",
+    name: "Running",
+    reason: "Simple, free, and powerfully effective for cardiovascular health.",
+    difficulty: "Beginner",
+    why: "Running builds a strong base of endurance with no equipment needed. It's scalable from a brisk walk to a 5K at your own pace.",
+    focusAreaPriorities: ["cardio_endurance", "lower_endurance", "full_body_strength", "agility"],
+  },
+  {
+    id: "cycling",
+    name: "Cycling",
+    reason: "Low-impact cardio that's easy on joints and great for building leg strength.",
+    difficulty: "Beginner",
+    why: "Cycling offers strong cardiovascular benefits without the joint stress of running. Perfect for long, sustainable efforts.",
+    focusAreaPriorities: ["cardio_endurance", "lower_endurance", "full_body_strength", "agility"],
+  },
+  {
+    id: "strength",
+    name: "Strength Training",
+    reason: "The most direct path to building functional muscle and metabolic health.",
+    difficulty: "Intermediate",
+    why: "Strength training reshapes your body composition, strengthens bones, and makes everyday life easier — from lifting groceries to climbing stairs without fatigue.",
+    focusAreaPriorities: [
+      "full_body_strength",
+      "lower_endurance",
+      "core_rotational",
+      "shoulder_mobility",
+    ],
   },
 ];
+
+// ─── Goal-to-FocusArea Mapping (Part A) ─────────────────────────────────
+
+export type GoalId =
+  | "health"
+  | "weight"
+  | "gain_weight"
+  | "strength"
+  | "social"
+  | "recovery"
+  | "stress";
+
+export type GoalProfile = {
+  focusAreas: FocusArea[];
+  /**
+   * 1.0 = standard, <1.0 = gentler, >1.0 = more demanding.
+   * When multiple goals are selected, the MINIMUM modifier wins — safety/gentleness always takes priority.
+   */
+  intensityModifier: number;
+};
+
+export const goalFocusMap: Record<GoalId, GoalProfile> = {
+  health: { focusAreas: ["full_body_strength", "cardio_endurance"], intensityModifier: 1.0 },
+  weight: { focusAreas: ["cardio_endurance", "full_body_strength"], intensityModifier: 1.1 },
+  gain_weight: { focusAreas: ["full_body_strength"], intensityModifier: 1.1 },
+  strength: { focusAreas: ["full_body_strength"], intensityModifier: 1.15 },
+  // "social" steers Community, not exercise selection (see Part F) — no focusAreas here
+  social: { focusAreas: [], intensityModifier: 1.0 },
+  recovery: { focusAreas: ["balance_flexibility"], intensityModifier: 0.7 },
+  stress: { focusAreas: ["balance_flexibility"], intensityModifier: 0.8 },
+};
+
+/**
+ * Blends focus area priorities across primary sport, additional sports, and selected goals.
+ * - Primary sport's focusAreaPriorities: full weight (1.0)
+ * - Additional sports' focusAreaPriorities: half weight (0.5) each
+ * - Selected goals' focusAreas: full weight (1.0), additive
+ * Returns a deduplicated FocusArea[] ordered by combined weight, highest first.
+ * Ties are broken by the primary sport's original order.
+ */
+export function blendFocusPriorities(
+  primarySportId: string | undefined,
+  additionalSportIds: string[],
+  goals: GoalId[],
+  sportCatalog: Sport[],
+): FocusArea[] {
+  const weights = new Map<FocusArea, number>();
+  const primaryOrder = new Map<FocusArea, number>(); // for tie-breaking
+
+  // Helper: add to weight map
+  const add = (fa: FocusArea, weight: number) => {
+    weights.set(fa, (weights.get(fa) ?? 0) + weight);
+  };
+
+  // Primary sport — full weight (1.0), also sets the tie-break order
+  if (primarySportId) {
+    const sport = sportCatalog.find((s) => s.id === primarySportId);
+    if (sport) {
+      sport.focusAreaPriorities.forEach((fa, idx) => {
+        add(fa, 1.0);
+        if (!primaryOrder.has(fa)) primaryOrder.set(fa, idx);
+      });
+    }
+  }
+
+  // Additional sports — half weight (0.5)
+  for (const sportId of additionalSportIds) {
+    const sport = sportCatalog.find((s) => s.id === sportId);
+    if (sport) {
+      sport.focusAreaPriorities.forEach((fa) => {
+        add(fa, 0.5);
+      });
+    }
+  }
+
+  // Goals — full weight (additive)
+  for (const goalId of goals) {
+    const profile = goalFocusMap[goalId];
+    if (profile) {
+      profile.focusAreas.forEach((fa) => {
+        add(fa, 2); // Goals add a flat bonus to their focus areas
+      });
+    }
+  }
+
+  // Sort by combined weight descending, ties broken by primary sport order (lower index = higher priority)
+  return Array.from(weights.keys()).sort((a, b) => {
+    const wDiff = (weights.get(b) ?? 0) - (weights.get(a) ?? 0);
+    if (wDiff !== 0) return wDiff;
+    const oa = primaryOrder.get(a) ?? 999;
+    const ob = primaryOrder.get(b) ?? 999;
+    return oa - ob;
+  });
+}
+
+/**
+ * Derives the effective intensity modifier for a set of selected goals.
+ * Takes the MINIMUM across all selected goals — conservative/safety-first.
+ */
+export function deriveIntensityModifier(goals: GoalId[]): number {
+  if (goals.length === 0) return 1.0;
+  return Math.min(...goals.map((g) => goalFocusMap[g]?.intensityModifier ?? 1.0));
+}
 
 export type CautionTag =
   | "deep_knee_flexion"
@@ -101,12 +243,12 @@ export type CautionTag =
   | "wrist_loading"
   | "high_cardio_intensity";
 
-export type EquipmentTag = 
-  | "dumbbell" 
-  | "resistance_band" 
-  | "bodyweight_only" 
-  | "mat" 
-  | "cardio_machine" 
+export type EquipmentTag =
+  | "dumbbell"
+  | "resistance_band"
+  | "bodyweight_only"
+  | "mat"
+  | "cardio_machine"
   | "pool_access";
 
 export type Exercise = {
@@ -118,11 +260,11 @@ export type Exercise = {
   tip: string;
   instructions: string;
   // Optional weight & pose fields
-  defaultWeight?: number;    // kg, undefined = bodyweight
+  defaultWeight?: number; // kg, undefined = bodyweight
   weightUnit?: "kg" | "lbs";
   supportsRepCount?: boolean; // can MediaPipe/voice count this exercise?
-  poseType?: "squat" | "pushup" | "lunge" | "bridge"; // for pose detection
-  
+  poseType?: AnalyzableExercise; // for pose detection
+
   trackingMode: TrackingMode;
   focusAreas: FocusArea[];
 
@@ -137,6 +279,9 @@ export type Exercise = {
 
   cautionTags?: CautionTag[];
   equipmentNeeded?: EquipmentTag[];
+
+  /** True when this exercise was inserted from a Movement Analysis drill recommendation */
+  fromAnalysis?: boolean;
 };
 
 export type Workout = {
@@ -148,6 +293,8 @@ export type Workout = {
   adapted: boolean;
   isRestDay?: boolean;
   appliedAdjustments?: string[];
+  /** Human-readable notes explaining why the plan looks the way it does (intensity adjustments, time budget trims, etc.) */
+  planningNotes?: string[];
 };
 
 export const todayWorkout: Workout = {
@@ -242,19 +389,25 @@ export const todayWorkout: Workout = {
     {
       id: "ex_lateral_shuttle",
       name: "Lateral Shuttle Run",
-      sets: 1, reps: 0, rest: 0,
+      sets: 1,
+      reps: 0,
+      rest: 0,
       tip: "Stay low and push off your outside foot.",
       instructions: "Shuffle side to side between two markers. Keep your chest up.",
       trackingMode: "interval",
       focusAreas: ["agility", "cardio_endurance"],
-      intervalRounds: 2, workSeconds: 5, restSeconds: 5,
+      intervalRounds: 2,
+      workSeconds: 5,
+      restSeconds: 5,
       cautionTags: ["high_impact_landing"],
       equipmentNeeded: [],
     },
     {
       id: "ex_easy_jog",
       name: "Easy Jog",
-      sets: 1, reps: 1, rest: 0,
+      sets: 1,
+      reps: 1,
+      rest: 0,
       tip: "Keep a conversational pace.",
       instructions: "Jog at a relaxed, steady effort.",
       trackingMode: "distance",
@@ -262,7 +415,7 @@ export const todayWorkout: Workout = {
       targetDurationMinutes: 20,
       cautionTags: ["high_impact_landing"],
       equipmentNeeded: [],
-    }
+    },
   ],
 };
 
@@ -286,7 +439,9 @@ export const weeklySessions = [
 
 export type ChatAction =
   | { type: "adjust_volume"; volumeMultiplier: number; note: string }
-  | { type: "swap_to_recovery" };
+  | { type: "swap_to_recovery" }
+  /** MOCK: prompts user to confirm logging soreness/fatigue as today's check-in (source: "chat"). */
+  | { type: "checkin_log" };
 
 export type ChatMessage = {
   id: string;
@@ -354,6 +509,9 @@ export type EventItem = {
   safetyLevel: "beginner_friendly" | "general_fitness" | "advanced";
   instructorPresent: boolean;
   isJoined: boolean;
+  waitlistCount: number;
+  isUserWaitlisted: boolean;
+  socialFit: ("solo" | "with_partner" | "small_group" | "any")[];
 };
 
 export const events: EventItem[] = [
@@ -373,6 +531,9 @@ export const events: EventItem[] = [
     safetyLevel: "beginner_friendly",
     instructorPresent: false,
     isJoined: false,
+    waitlistCount: 0,
+    isUserWaitlisted: false,
+    socialFit: ["small_group", "any"],
   },
   {
     id: "ev2",
@@ -390,6 +551,9 @@ export const events: EventItem[] = [
     safetyLevel: "beginner_friendly",
     instructorPresent: false,
     isJoined: false,
+    waitlistCount: 0,
+    isUserWaitlisted: false,
+    socialFit: ["small_group", "any"],
   },
   {
     id: "ev3",
@@ -407,6 +571,9 @@ export const events: EventItem[] = [
     safetyLevel: "beginner_friendly",
     instructorPresent: true,
     isJoined: false,
+    waitlistCount: 0,
+    isUserWaitlisted: false,
+    socialFit: ["solo", "small_group", "any"],
   },
   {
     id: "ev4",
@@ -423,6 +590,9 @@ export const events: EventItem[] = [
     safetyLevel: "general_fitness",
     instructorPresent: false,
     isJoined: false,
+    waitlistCount: 3,
+    isUserWaitlisted: false,
+    socialFit: ["with_partner", "small_group", "any"],
   },
   {
     id: "ev5",
@@ -440,6 +610,9 @@ export const events: EventItem[] = [
     safetyLevel: "beginner_friendly",
     instructorPresent: true,
     isJoined: false,
+    waitlistCount: 0,
+    isUserWaitlisted: false,
+    socialFit: ["solo", "with_partner", "any"],
   },
 ];
 
@@ -491,9 +664,11 @@ export const badges: Badge[] = [
   },
 ];
 
+export type AnalyzableExercise = "squat" | "pushup" | "lunge" | "bridge";
+
 export type AnalysisResult = {
   id: string;
-  exercise: "Squat" | "Push-up";
+  exercise: AnalyzableExercise;
   date: string;
   score: number;
   metrics: { label: string; value: string; status: "good" | "improve"; note: string }[];
@@ -505,7 +680,7 @@ export type AnalysisResult = {
 export const analyses: AnalysisResult[] = [
   {
     id: "a1",
-    exercise: "Squat",
+    exercise: "squat",
     date: "2025-05-14",
     score: 78,
     prevScore: 72,
@@ -529,7 +704,7 @@ export const analyses: AnalysisResult[] = [
   },
   {
     id: "a2",
-    exercise: "Push-up",
+    exercise: "pushup",
     date: "2025-05-08",
     score: 64,
     metrics: [
@@ -543,15 +718,73 @@ export const analyses: AnalysisResult[] = [
       description: "3 × 8 with 3-second descent. Builds the right elbow path before adding load.",
     },
   },
+  {
+    id: "a3",
+    exercise: "lunge",
+    date: "2025-05-18",
+    score: 82,
+    metrics: [
+      {
+        label: "Front knee tracking",
+        value: "Aligned",
+        status: "good",
+        note: "Knee stays over ankle",
+      },
+      { label: "Back knee drop", value: "90° angle", status: "good", note: "Great depth" },
+      { label: "Torso angle", value: "Leaning forward", status: "improve", note: "Keep chest up" },
+    ],
+    feedback:
+      "Your **lunge depth is great** and knee tracking is solid.\n\n• You tend to lean your torso forward too much; try to stay upright.\n• This will help engage your core and balance better.",
+    drill: {
+      name: "Dowel Lunges",
+      description: "Hold a broomstick along your spine to ensure upright posture while lunging.",
+    },
+  },
+  {
+    id: "a4",
+    exercise: "bridge",
+    date: "2025-05-19",
+    score: 68,
+    metrics: [
+      {
+        label: "Hip extension",
+        value: "Incomplete",
+        status: "improve",
+        note: "Hips not fully extended at top",
+      },
+      {
+        label: "Spinal alignment",
+        value: "Arching",
+        status: "improve",
+        note: "Avoid over-arching lower back",
+      },
+    ],
+    feedback:
+      "**You're missing full hip extension**.\n\n• Squeeze your glutes at the top instead of pushing from your lower back.\n• Think about driving through your heels.",
+    drill: {
+      name: "Single-leg Glute Bridge",
+      description: "Isolates the glute to prevent lower back compensation.",
+    },
+  },
 ];
 
-export const checkinHistory = [
-  { date: "2025-05-09", energy: 4, soreness: 2, mood: 4, motivation: 5, sleep: 4 },
-  { date: "2025-05-10", energy: 3, soreness: 3, mood: 4, motivation: 4, sleep: 3 },
-  { date: "2025-05-11", energy: 5, soreness: 1, mood: 5, motivation: 5, sleep: 5 },
-  { date: "2025-05-12", energy: 3, soreness: 4, mood: 3, motivation: 3, sleep: 3 },
-  { date: "2025-05-13", energy: 4, soreness: 3, mood: 4, motivation: 4, sleep: 4 },
-  { date: "2025-05-14", energy: 4, soreness: 2, mood: 5, motivation: 4, sleep: 4 },
+export type CheckinEntry = {
+  date: string;
+  energy: number;
+  soreness: number;
+  mood: number;
+  motivation: number;
+  sleep: number;
+  source: "form" | "chat" | "both";
+};
+
+export const checkinHistory: CheckinEntry[] = [
+  { date: "2025-05-09", energy: 4, soreness: 2, mood: 4, motivation: 5, sleep: 4, source: "form" },
+  { date: "2025-05-10", energy: 3, soreness: 3, mood: 4, motivation: 4, sleep: 3, source: "form" },
+  { date: "2025-05-11", energy: 5, soreness: 1, mood: 5, motivation: 5, sleep: 5, source: "both" },
+  { date: "2025-05-12", energy: 3, soreness: 4, mood: 3, motivation: 3, sleep: 3, source: "form" },
+  { date: "2025-05-13", energy: 4, soreness: 3, mood: 4, motivation: 4, sleep: 4, source: "form" },
+  { date: "2025-05-14", energy: 4, soreness: 2, mood: 5, motivation: 4, sleep: 4, source: "chat" },
 ];
 
 export const suggestedPrompts = [
@@ -706,27 +939,37 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "ex_lateral_shuttle",
     name: "Lateral Shuttle Run",
-    sets: 1, reps: 0, rest: 0,
+    sets: 1,
+    reps: 0,
+    rest: 0,
     tip: "Stay low and push off your outside foot.",
     instructions: "Shuffle side to side between two markers. Keep your chest up.",
     trackingMode: "interval",
     focusAreas: ["agility", "cardio_endurance"],
-    intervalRounds: 4, workSeconds: 30, restSeconds: 15,
+    intervalRounds: 4,
+    workSeconds: 30,
+    restSeconds: 15,
   },
   {
     id: "ex_jump_rope",
     name: "Jump Rope Intervals",
-    sets: 1, reps: 0, rest: 0,
+    sets: 1,
+    reps: 0,
+    rest: 0,
     tip: "Stay light on your feet, use your wrists.",
     instructions: "Jump rope at a steady pace.",
     trackingMode: "interval",
     focusAreas: ["cardio_endurance", "lower_endurance"],
-    intervalRounds: 5, workSeconds: 40, restSeconds: 20,
+    intervalRounds: 5,
+    workSeconds: 40,
+    restSeconds: 20,
   },
   {
     id: "ex_side_plank",
     name: "Side Plank",
-    sets: 2, reps: 30, rest: 30,
+    sets: 2,
+    reps: 30,
+    rest: 30,
     tip: "Hold duration is in seconds per side. Keep your body in a straight line.",
     instructions: "Support yourself on one forearm and the side of your foot.",
     trackingMode: "hold",
@@ -735,7 +978,9 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "ex_shoulder_flow",
     name: "Shoulder Mobility Flow",
-    sets: 1, reps: 45, rest: 0,
+    sets: 1,
+    reps: 45,
+    rest: 0,
     tip: "Move smoothly through your full range of motion.",
     instructions: "Perform arm circles and pass-throughs.",
     trackingMode: "hold",
@@ -744,7 +989,9 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "ex_easy_jog",
     name: "Easy Jog",
-    sets: 1, reps: 1, rest: 0,
+    sets: 1,
+    reps: 1,
+    rest: 0,
     tip: "Keep a conversational pace.",
     instructions: "Jog at a relaxed, steady effort.",
     trackingMode: "distance",
@@ -754,17 +1001,22 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "ex_steady_swim",
     name: "Steady Swim",
-    sets: 1, reps: 1, rest: 0,
+    sets: 1,
+    reps: 1,
+    rest: 0,
     tip: "Focus on your breathing rhythm.",
     instructions: "Swim continuously at a moderate pace.",
     trackingMode: "distance",
     focusAreas: ["cardio_endurance", "shoulder_mobility"],
-    targetDurationMinutes: 30, targetDistanceKm: 0.5,
+    targetDurationMinutes: 30,
+    targetDistanceKm: 0.5,
   },
   {
     id: "ex_hip_hinge",
     name: "Hip Hinge Drill",
-    sets: 3, reps: 12, rest: 30,
+    sets: 3,
+    reps: 12,
+    rest: 30,
     tip: "Push your hips back to the wall.",
     instructions: "Keep your back straight and hinge at the hips.",
     trackingMode: "rep",
@@ -773,13 +1025,17 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "ex_squat_jump",
     name: "Squat Jump",
-    sets: 1, reps: 0, rest: 0,
+    sets: 1,
+    reps: 0,
+    rest: 0,
     tip: "Land softly to protect your knees.",
     instructions: "Explode up from a squat, land with bent knees.",
     trackingMode: "interval",
     focusAreas: ["agility", "lower_endurance"],
-    intervalRounds: 4, workSeconds: 20, restSeconds: 20,
-  }
+    intervalRounds: 4,
+    workSeconds: 20,
+    restSeconds: 20,
+  },
 ];
 
 // MOCK ONLY — this simulates what the Spring Boot backend will eventually do:
@@ -787,28 +1043,30 @@ export const exerciseCatalog: Exercise[] = [
 // user's picked sport's focusAreaPriorities, and assemble a daily workout.
 // Replace this with a real API call (GET /api/workouts/today) later.
 export function generateMockWorkoutForSport(sportId: string): Workout {
-  const sport = sportRecommendations.find(s => s.id === sportId);
+  const sport = sportRecommendations.find((s) => s.id === sportId);
   if (!sport) return todayWorkout;
 
   const priorities = sport.focusAreaPriorities;
-  
+
   // Find exercises matching the top priorities
   // Simple mock algorithm: get all exercises that share at least one focus area
   // Sort them so those with top priorities come first, then take top 5
-  const scoredExercises = exerciseCatalog.map(ex => {
-    let score = 0;
-    ex.focusAreas.forEach(fa => {
-      const idx = priorities.indexOf(fa);
-      if (idx !== -1) {
-        // Higher priority (lower index) gives more points
-        score += (priorities.length - idx);
-      }
-    });
-    return { ex, score };
-  }).filter(item => item.score > 0)
+  const scoredExercises = exerciseCatalog
+    .map((ex) => {
+      let score = 0;
+      ex.focusAreas.forEach((fa) => {
+        const idx = priorities.indexOf(fa);
+        if (idx !== -1) {
+          // Higher priority (lower index) gives more points
+          score += priorities.length - idx;
+        }
+      });
+      return { ex, score };
+    })
+    .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  const selectedExercises = scoredExercises.slice(0, 5).map(item => item.ex);
+  const selectedExercises = scoredExercises.slice(0, 5).map((item) => item.ex);
 
   // If no match found, fallback to todayWorkout
   if (selectedExercises.length === 0) {
@@ -818,7 +1076,7 @@ export function generateMockWorkoutForSport(sportId: string): Workout {
   return {
     id: `w_mock_${sportId}`,
     title: `${sport.name} Conditioning`,
-    duration: 30, 
+    duration: 30,
     difficulty: "Regular",
     adapted: false,
     exercises: selectedExercises,
@@ -841,35 +1099,35 @@ export const bodyWeightHistory: BodyWeightEntry[] = [
 
 export const structuredConditionCautionMap: Record<string, CautionTag[]> = {
   // Joint issues — maps each sub-option from conditionMeta
-  "Joint issues:Knee":     ["deep_knee_flexion", "high_impact_landing"],
-  "Joint issues:Hip":      ["deep_knee_flexion", "high_impact_landing"],
+  "Joint issues:Knee": ["deep_knee_flexion", "high_impact_landing"],
+  "Joint issues:Hip": ["deep_knee_flexion", "high_impact_landing"],
   "Joint issues:Shoulder": ["overhead_shoulder_load"],
-  "Joint issues:Wrist":    ["wrist_loading"],
-  "Joint issues:Ankle":    ["high_impact_landing"],
+  "Joint issues:Wrist": ["wrist_loading"],
+  "Joint issues:Ankle": ["high_impact_landing"],
   // "Joint issues:Other" is intentionally omitted — free-text context, flagged as manual_review
 
   // Back pain
-  "Back pain:Lower":     ["spinal_flexion_load", "spinal_extension_load"],
-  "Back pain:Upper":     ["spinal_extension_load", "overhead_shoulder_load"],
+  "Back pain:Lower": ["spinal_flexion_load", "spinal_extension_load"],
+  "Back pain:Upper": ["spinal_extension_load", "overhead_shoulder_load"],
   "Back pain:Full back": ["spinal_flexion_load", "spinal_extension_load"],
 
   // Chronic conditions
   "Chronic condition:Heart condition": ["high_cardio_intensity"],
-  "Chronic condition:Asthma":          ["high_cardio_intensity"],
-  "Chronic condition:Diabetes":        ["high_cardio_intensity"],
+  "Chronic condition:Asthma": ["high_cardio_intensity"],
+  "Chronic condition:Diabetes": ["high_cardio_intensity"],
   // "Chronic condition:Other" is intentionally omitted — free-text, flagged as manual_review
 };
 
 export type AdaptationNote = {
   exerciseId: string;
   exerciseName: string;
-  type: "substituted" | "caution" | "manual_review";
+  type: "substituted" | "caution" | "manual_review" | "general_caution";
   reason: string;
 };
 
 export function adaptWorkoutForHealthProfile(
   workout: Workout,
-  healthProfile: any
+  healthProfile: any,
 ): { workout: Workout; adaptationNotes: AdaptationNote[] } {
   if (!healthProfile.hasConditions || healthProfile.conditions.length === 0) {
     return { workout, adaptationNotes: [] };
@@ -877,6 +1135,16 @@ export function adaptWorkoutForHealthProfile(
 
   const notes: AdaptationNote[] = [];
   const adaptedWorkout: Workout = { ...workout, exercises: [...workout.exercises] };
+
+  if (healthProfile.disclosureStatus === "undisclosed") {
+    notes.push({
+      exerciseId: "global",
+      exerciseName: "All",
+      type: "general_caution",
+      reason: "We don't have your health details — listen to your body and adjust as needed.",
+    });
+    return { workout: adaptedWorkout, adaptationNotes: notes };
+  }
 
   let needsManualReview = false;
   const manualReviewReasons: string[] = [];
@@ -895,7 +1163,7 @@ export function adaptWorkoutForHealthProfile(
     }
 
     const typePrefix = c.type;
-    
+
     if (conditionValues.length > 0) {
       conditionValues.forEach((v: string) => {
         // Skip "Other" — it's free-text context, flagged as manual_review above
@@ -903,7 +1171,7 @@ export function adaptWorkoutForHealthProfile(
         const key = `${typePrefix}:${v}`;
         const tags = structuredConditionCautionMap[key];
         if (tags) {
-          tags.forEach(tag => {
+          tags.forEach((tag) => {
             activeCautions.add(tag);
             activeCautionReasons.set(tag, c.severity);
           });
@@ -913,7 +1181,7 @@ export function adaptWorkoutForHealthProfile(
       const key = typePrefix;
       const tags = structuredConditionCautionMap[key];
       if (tags) {
-        tags.forEach(tag => {
+        tags.forEach((tag) => {
           activeCautions.add(tag);
           activeCautionReasons.set(tag, c.severity);
         });
@@ -926,7 +1194,8 @@ export function adaptWorkoutForHealthProfile(
       exerciseId: "global",
       exerciseName: "All",
       type: "manual_review",
-      reason: "This condition needs a closer look — exercises aren't auto-adjusted for it yet. Take it easy and modify as needed.",
+      reason:
+        "This condition needs a closer look — exercises aren't auto-adjusted for it yet. Take it easy and modify as needed.",
     });
   }
 
@@ -956,10 +1225,11 @@ export function adaptWorkoutForHealthProfile(
         });
       } else {
         const substitute = exerciseCatalog.find(
-          cEx => cEx.id !== ex.id &&
-          cEx.trackingMode === ex.trackingMode &&
-          cEx.focusAreas.some(fa => ex.focusAreas.includes(fa)) &&
-          (!cEx.cautionTags || !cEx.cautionTags.includes(conflictTag as CautionTag))
+          (cEx) =>
+            cEx.id !== ex.id &&
+            cEx.trackingMode === ex.trackingMode &&
+            cEx.focusAreas.some((fa) => ex.focusAreas.includes(fa)) &&
+            (!cEx.cautionTags || !cEx.cautionTags.includes(conflictTag as CautionTag)),
         );
 
         if (substitute) {
@@ -986,23 +1256,265 @@ export function adaptWorkoutForHealthProfile(
   return { workout: adaptedWorkout, adaptationNotes: notes };
 }
 
+export function getSubstituteCandidates(
+  originalId: string,
+  healthProfile: any,
+  limit = 3,
+): Exercise[] {
+  const original = exerciseCatalog.find((e) => e.id === originalId);
+  if (!original) return [];
+
+  const activeCautions = new Set<CautionTag>();
+
+  if (healthProfile?.hasConditions && healthProfile.conditions) {
+    healthProfile.conditions.forEach((c: any) => {
+      const conditionValues: string[] = c.details?.values || c.details?.joints || [];
+      const typePrefix = c.type;
+
+      if (conditionValues.length > 0) {
+        conditionValues.forEach((v: string) => {
+          if (v === "Other") return;
+          const key = `${typePrefix}:${v}`;
+          const tags = structuredConditionCautionMap[key];
+          if (tags) {
+            tags.forEach((tag) => activeCautions.add(tag));
+          }
+        });
+      } else {
+        const key = typePrefix;
+        const tags = structuredConditionCautionMap[key];
+        if (tags) {
+          tags.forEach((tag) => activeCautions.add(tag));
+        }
+      }
+    });
+  }
+
+  return exerciseCatalog
+    .filter((ex) => {
+      if (ex.id === originalId) return false;
+      const sharesFocus = ex.focusAreas.some((fa) => original.focusAreas.includes(fa));
+      if (!sharesFocus) return false;
+      if (ex.cautionTags && ex.cautionTags.some((tag) => activeCautions.has(tag))) {
+        return false;
+      }
+      return true;
+    })
+    .slice(0, limit);
+}
+
 export function filterExercisesByLocation(exercises: Exercise[], location: string): Exercise[] {
   if (location === "Gym" || location === "Mix of all" || !location) return exercises;
-  
-  return exercises.filter(ex => {
+
+  return exercises.filter((ex) => {
     const eq = ex.equipmentNeeded || [];
-    
+
     if (location === "Home") {
-      const needsGymEq = eq.some(e => e === "dumbbell" || e === "resistance_band" || e === "cardio_machine" || e === "pool_access");
+      const needsGymEq = eq.some(
+        (e) =>
+          e === "dumbbell" ||
+          e === "resistance_band" ||
+          e === "cardio_machine" ||
+          e === "pool_access",
+      );
       if (needsGymEq && !eq.includes("bodyweight_only")) return false;
       return true;
     }
-    
+
     if (location === "Outdoors") {
       if (eq.includes("pool_access") || eq.includes("cardio_machine")) return false;
       return true;
     }
-    
+
     return true;
   });
+}
+
+// ─── Weekly Budget (Part D) ──────────────────────────────────────────
+
+export const weeklyWorkoutPlan: Workout[] = [
+  todayWorkout,
+  todayWorkout,
+  todayWorkout, // Using todayWorkout as a placeholder for a 3-day plan
+];
+
+export function estimateWeeklyMinutes(plan: Workout[]): number {
+  return plan.reduce((acc, w) => acc + (w.isRestDay ? 0 : w.duration), 0);
+}
+
+export function fitsTimeBudget(estimatedMinutes: number, timePerWeek: string | undefined): boolean {
+  if (!timePerWeek) return true;
+  if (timePerWeek.includes("90")) return estimatedMinutes <= 120; // Allow slight overflow
+  if (timePerWeek.includes("150")) return estimatedMinutes <= 180;
+  return true; // Over 150 assumes boundless or manual control
+}
+
+// ─── Intensity Profile (Part C) ──────────────────────────────────────
+
+export type IntensityProfile = "gentle" | "standard" | "challenge";
+
+export function deriveIntensityProfile(
+  fitnessLevel: string | undefined,
+  confidence: number | undefined,
+): IntensityProfile {
+  if (fitnessLevel === "Beginner" || (confidence !== undefined && confidence < 4)) {
+    return "gentle";
+  }
+  if (fitnessLevel === "Advanced" && confidence !== undefined && confidence >= 8) {
+    return "challenge";
+  }
+  return "standard";
+}
+
+export function applyIntensityProfile(workout: Workout, profile: IntensityProfile): Workout {
+  if (profile === "standard") return workout;
+
+  const adapted = {
+    ...workout,
+    exercises: [...workout.exercises],
+    planningNotes: [...(workout.planningNotes || [])],
+  };
+
+  if (profile === "gentle") {
+    adapted.duration = Math.max(10, Math.floor(adapted.duration * 0.8));
+    adapted.difficulty = "Adjusted";
+    adapted.planningNotes!.push("Reduced volume based on your gentler intensity profile.");
+    adapted.exercises = adapted.exercises.map((ex) => {
+      const e = { ...ex };
+      if (e.sets > 1) e.sets -= 1;
+      if (e.reps > 5) e.reps = Math.floor(e.reps * 0.8);
+      if (e.restSeconds) e.restSeconds += 15;
+      return e;
+    });
+  } else if (profile === "challenge") {
+    adapted.duration = Math.floor(adapted.duration * 1.2);
+    adapted.difficulty = "Regular";
+    adapted.planningNotes!.push("Increased volume to match your advanced intensity profile.");
+    adapted.exercises = adapted.exercises.map((ex) => {
+      const e = { ...ex };
+      e.sets += 1;
+      if (e.reps > 0) e.reps += 2;
+      return e;
+    });
+  }
+  return adapted;
+}
+
+// ─── Master Orchestrator (Part E) ────────────────────────────────────
+
+export type DailyPlanResult = {
+  workout: Workout;
+  planningNotes: string[];
+  adaptationNotes: AdaptationNote[];
+};
+
+/**
+ * The central pipeline for personalizing a day's workout.
+ */
+export function generateDailyPlan(
+  isRestDay: boolean,
+  primarySportId: string | undefined,
+  additionalSportIds: string[],
+  goals: GoalId[],
+  healthProfile: any,
+  fitnessLevel: string | undefined,
+  confidence: number | undefined,
+  location: string | undefined,
+  timePerWeek?: string | undefined,
+): DailyPlanResult {
+  if (isRestDay) {
+    return {
+      workout: {
+        id: "w_rest",
+        title: "Rest Day",
+        duration: 0,
+        difficulty: "Rest",
+        adapted: false,
+        exercises: [],
+        isRestDay: true,
+      },
+      planningNotes: ["Today is a scheduled rest day. Let your body recover."],
+      adaptationNotes: [],
+    };
+  }
+
+  // 1. Blend focus priorities (conceptually, to pick exercises)
+  const blendedFocus = blendFocusPriorities(
+    primarySportId,
+    additionalSportIds,
+    goals,
+    sportRecommendations,
+  );
+
+  // 2. Base workout selection (Mock: just uses sport-aware generator for now)
+  const baseWorkout = generateMockWorkoutForSport(primarySportId || "badminton");
+  const planningNotes: string[] = [`Focused on: ${blendedFocus.slice(0, 3).join(", ")}`];
+
+  // 3. Filter by location
+  baseWorkout.exercises = filterExercisesByLocation(
+    baseWorkout.exercises,
+    location || "Mix of all",
+  );
+  if (baseWorkout.exercises.length < 3) {
+    planningNotes.push(`Limited exercise options available for ${location} location.`);
+  }
+
+  // 4. Adapt for health profile
+  const { workout: healthAdapted, adaptationNotes } = adaptWorkoutForHealthProfile(
+    baseWorkout,
+    healthProfile,
+  );
+  healthAdapted.planningNotes = planningNotes;
+
+  // 5. Apply intensity profile and goal modifier
+  const intensityProfile = deriveIntensityProfile(fitnessLevel, confidence);
+  const finalWorkout = applyIntensityProfile(healthAdapted, intensityProfile);
+
+  const goalModifier = deriveIntensityModifier(goals);
+  if (goalModifier !== 1.0) {
+    finalWorkout.planningNotes!.push(
+      `Overall intensity scaled by ${goalModifier}x due to your selected goals.`,
+    );
+  }
+
+  // 7. Weekly budget check
+  const estimatedMins = estimateWeeklyMinutes(weeklyWorkoutPlan) + finalWorkout.duration;
+  if (!fitsTimeBudget(estimatedMins, timePerWeek)) {
+    return {
+      workout: {
+        id: "w_rest_budget",
+        title: "Rest Day",
+        duration: 0,
+        difficulty: "Rest",
+        adapted: true,
+        exercises: [],
+        isRestDay: true,
+      },
+      planningNotes: [
+        ...(finalWorkout.planningNotes || []),
+        "Converted to a rest day to keep you within your weekly time budget.",
+      ],
+      adaptationNotes,
+    };
+  }
+
+  return {
+    workout: finalWorkout,
+    planningNotes: finalWorkout.planningNotes || [],
+    adaptationNotes,
+  };
+}
+
+// ─── Nudge Logic (Part G) ────────────────────────────────────────────
+
+export function shouldShowStreakNudge(streak: number, checkinDoneToday: boolean): boolean {
+  if (checkinDoneToday || streak === 0) return false;
+  return true; // Simple mock logic: show if they have an active streak but haven't checked in
+}
+
+export function shouldShowMilestoneNudge(joinedAt: string, today: Date = new Date()): boolean {
+  const joinDate = new Date(joinedAt);
+  const diffTime = Math.abs(today.getTime() - joinDate.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays === 7 || diffDays === 30 || diffDays === 100;
 }

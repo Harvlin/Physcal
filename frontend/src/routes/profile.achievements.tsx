@@ -14,7 +14,12 @@ function AchievementsPage() {
   const c = useColors();
 
   return (
-    <div className="min-h-dvh" style={{ background: `linear-gradient(175deg, ${c.isDark ? '#1E1E1B' : '#FFFFFF'} 0%, ${c.isDark ? '#181816' : '#F4F3EE'} 100%)` }}>
+    <div
+      className="min-h-dvh"
+      style={{
+        background: `linear-gradient(175deg, ${c.isDark ? "#1E1E1B" : "#FFFFFF"} 0%, ${c.isDark ? "#181816" : "#F4F3EE"} 100%)`,
+      }}
+    >
       <PageHeader
         title="Achievements"
         back="/profile"
@@ -22,7 +27,10 @@ function AchievementsPage() {
       />
       <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto pb-12">
         <div className="mb-6">
-          <div className="flex justify-between text-xs font-semibold mb-2" style={{ color: c.textTertiary }}>
+          <div
+            className="flex justify-between text-xs font-semibold mb-2"
+            style={{ color: c.textTertiary }}
+          >
             <span>Progress</span>
             <span style={{ color: c.sunGlare }}>{Math.round(pct)}%</span>
           </div>

@@ -17,8 +17,6 @@ export const Route = createFileRoute("/community/$eventId")({
   component: EventDetail,
 });
 
-
-
 function EventDetail() {
   const { eventId } = Route.useParams();
   const event = events.find((e) => e.id === eventId) || events[0];
@@ -29,14 +27,14 @@ function EventDetail() {
 
   const [showSafetyWarning, setShowSafetyWarning] = useState(false);
   const [isJoined, setIsJoined] = useState(event.isJoined ?? false);
+  const [isWaitlisted, setIsWaitlisted] = useState(event.isUserWaitlisted ?? false);
 
   const healthProfile = useApp((s) => s.healthProfile);
 
   const handleJoinAttempt = () => {
     const hasHealthConditions = healthProfile?.hasConditions;
     const isRiskyForConditions =
-      event.safetyLevel === "advanced" ||
-      event.safetyLevel === "general_fitness";
+      event.safetyLevel === "advanced" || event.safetyLevel === "general_fitness";
 
     if (hasHealthConditions && isRiskyForConditions) {
       setShowSafetyWarning(true);
@@ -46,7 +44,11 @@ function EventDetail() {
   };
 
   const handleConfirmJoin = () => {
-    setIsJoined(true);
+    if (full) {
+      setIsWaitlisted(true);
+    } else {
+      setIsJoined(true);
+    }
     setShowSafetyWarning(false);
     // API call will replace this in backend integration phase
   };
@@ -61,12 +63,27 @@ function EventDetail() {
   const getSafetyBadge = () => {
     if (!event.safetyLevel) return null;
     if (event.safetyLevel === "beginner_friendly") {
-      return { bg: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33`, label: "🟢 Beginner Friendly" };
+      return {
+        bg: c.sunGlareBg,
+        color: c.sunGlare,
+        border: `1px solid ${c.sunGlare}33`,
+        label: "🟢 Beginner Friendly",
+      };
     }
     if (event.safetyLevel === "general_fitness") {
-      return { bg: c.chipBg, color: c.textSecondary, border: `1px solid ${c.inputBorder}`, label: "🟠 General Fitness" };
+      return {
+        bg: c.chipBg,
+        color: c.textSecondary,
+        border: `1px solid ${c.inputBorder}`,
+        label: "🟠 General Fitness",
+      };
     }
-    return { bg: "rgba(229, 62, 62, 0.1)", color: "#E53E3E", border: "1px solid rgba(229, 62, 62, 0.3)", label: "🔴 Advanced" };
+    return {
+      bg: "rgba(229, 62, 62, 0.1)",
+      color: "#E53E3E",
+      border: "1px solid rgba(229, 62, 62, 0.3)",
+      label: "🔴 Advanced",
+    };
   };
 
   const safetyBadge = getSafetyBadge();
@@ -79,24 +96,37 @@ function EventDetail() {
   ];
 
   // Determine CTA button state
-  const ctaDisabled = full || isJoined;
-  const ctaLabel = isJoined ? "✓ Joined" : full ? "Event full" : "Join event";
-  const ctaStyle = isJoined
-    ? { background: c.chipBg, color: c.textSecondary, border: `1px solid ${c.chipBorder}`, boxShadow: "none" }
-    : full
-      ? { background: c.chipBg, color: c.textTertiary, border: `1px solid ${c.chipBorder}`, boxShadow: "none" }
-      : { background: c.sunGlare, color: "#1C1C1A", border: "none", boxShadow: `0 0 28px ${c.sunGlareBg}` };
+  const ctaDisabled = isJoined || isWaitlisted;
+  const ctaLabel = isJoined
+    ? "✓ Joined"
+    : isWaitlisted
+      ? "✓ Waitlisted"
+      : full
+        ? "Join Waitlist"
+        : "Join event";
+
+  const ctaStyle =
+    isJoined || isWaitlisted
+      ? {
+          background: c.chipBg,
+          color: c.textSecondary,
+          border: `1px solid ${c.chipBorder}`,
+          boxShadow: "none",
+        }
+      : {
+          background: c.sunGlare,
+          color: "#1C1C1A",
+          border: "none",
+          boxShadow: `0 0 28px ${c.sunGlareBg}`,
+        };
 
   return (
-    <div
-      className="min-h-dvh"
-      style={{ background: c.appBg }}
-    >
+    <div className="min-h-dvh" style={{ background: c.appBg }}>
       {/* Hero area */}
       <div
         className="h-48 lg:h-64 flex items-end p-5 relative"
         style={{
-          background: `radial-gradient(ellipse 80% 60% at 30% 60%, ${c.sunGlareBg} 0%, transparent 70%), linear-gradient(175deg, ${c.isDark ? '#242420' : '#E6E3D8'} 0%, ${c.isDark ? '#1C1C1A' : '#F4F3EE'} 100%)`,
+          background: `radial-gradient(ellipse 80% 60% at 30% 60%, ${c.sunGlareBg} 0%, transparent 70%), linear-gradient(175deg, ${c.isDark ? "#242420" : "#E6E3D8"} 0%, ${c.isDark ? "#1C1C1A" : "#F4F3EE"} 100%)`,
           borderBottom: `1px solid ${c.divider}`,
         }}
       >
@@ -134,10 +164,7 @@ function EventDetail() {
           >
             {event.sport}
           </div>
-          <h1
-            className="text-3xl font-black max-w-md"
-            style={{ color: c.textPrimary }}
-          >
+          <h1 className="text-3xl font-black max-w-md" style={{ color: c.textPrimary }}>
             {event.title}
           </h1>
         </div>
@@ -183,11 +210,21 @@ function EventDetail() {
             label={`${event.joined} of ${event.capacity} joined · hosted by ${event.host}`}
             c={c}
           />
+          {event.waitlistCount > 0 && (
+            <Row
+              icon={<Users size={15} />}
+              label={`${event.waitlistCount} ${event.waitlistCount === 1 ? "person" : "people"} on waitlist`}
+              c={c}
+            />
+          )}
         </div>
 
         {/* Capacity progress */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs font-semibold mb-1.5" style={{ color: c.textTertiary }}>
+          <div
+            className="flex justify-between text-xs font-semibold mb-1.5"
+            style={{ color: c.textTertiary }}
+          >
             <span>Capacity</span>
             <span>{Math.round(ratio * 100)}%</span>
           </div>
@@ -222,7 +259,12 @@ function EventDetail() {
 
         {/* About */}
         <div className="card-frosted p-5 mb-6">
-          <h2 className="font-bold mb-2 text-sm uppercase tracking-widest" style={{ color: c.textTertiary }}>About</h2>
+          <h2
+            className="font-bold mb-2 text-sm uppercase tracking-widest"
+            style={{ color: c.textTertiary }}
+          >
+            About
+          </h2>
           <p className="text-sm leading-relaxed font-medium" style={{ color: c.textSecondary }}>
             {event.description}
           </p>
@@ -230,7 +272,9 @@ function EventDetail() {
 
         {/* Who's coming */}
         <div className="mb-6">
-          <h2 className="font-bold mb-3" style={{ color: c.textPrimary }}>Who&apos;s coming</h2>
+          <h2 className="font-bold mb-3" style={{ color: c.textPrimary }}>
+            Who&apos;s coming
+          </h2>
           <div className="flex -space-x-2">
             {Array.from({ length: Math.min(8, event.joined) }).map((_, i) => {
               const style = avatarColors[i % avatarColors.length];
@@ -274,9 +318,8 @@ function EventDetail() {
             padding: "16px 24px",
           }}
         >
-          ℹ️ Community events are organized by Physcal members, not Physcal staff.
-          Always consult your doctor before joining physical activities if you have
-          existing health conditions.
+          ℹ️ Community events are organized by Physcal members, not Physcal staff. Always consult
+          your doctor before joining physical activities if you have existing health conditions.
         </div>
       </div>
 
@@ -313,11 +356,16 @@ function EventDetail() {
           }}
         >
           <DrawerHeader className="text-center pt-6 pb-2">
-            <DrawerTitle className="flex items-center justify-center gap-2" style={{ color: c.textPrimary }}>
+            <DrawerTitle
+              className="flex items-center justify-center gap-2"
+              style={{ color: c.textPrimary }}
+            >
               <Sparkles size={20} style={{ color: c.sunGlare }} />
               <span className="text-[18px] font-bold">Athena Notice</span>
             </DrawerTitle>
-            <DrawerDescription className="sr-only">Safety warning for health conditions</DrawerDescription>
+            <DrawerDescription className="sr-only">
+              Safety warning for health conditions
+            </DrawerDescription>
           </DrawerHeader>
 
           <div className="px-5 space-y-4 mt-2">
@@ -326,9 +374,12 @@ function EventDetail() {
               <h3 className="font-semibold text-[15px] mb-2" style={{ color: c.textPrimary }}>
                 This event may not match your health profile
               </h3>
-              <p className="text-[13px] font-medium leading-relaxed" style={{ color: c.textSecondary, lineHeight: 1.6 }}>
-                Based on your health profile, you have conditions that may be affected
-                by {safetyLevelLabel} intensity activities.
+              <p
+                className="text-[13px] font-medium leading-relaxed"
+                style={{ color: c.textSecondary, lineHeight: 1.6 }}
+              >
+                Based on your health profile, you have conditions that may be affected by{" "}
+                {safetyLevelLabel} intensity activities.
               </p>
 
               {/* Avoidances pills */}
@@ -349,16 +400,19 @@ function EventDetail() {
                       >
                         ⚠️ {cond.avoidances}
                       </span>
-                    ) : null
+                    ) : null,
                   )}
                 </div>
               )}
             </div>
 
             {/* Recommendation line */}
-            <p className="text-[13px] font-medium text-center px-2" style={{ color: c.textTertiary, lineHeight: 1.6 }}>
-              We recommend consulting your doctor or Athena coach before joining
-              activities outside your comfort zone.
+            <p
+              className="text-[13px] font-medium text-center px-2"
+              style={{ color: c.textTertiary, lineHeight: 1.6 }}
+            >
+              We recommend consulting your doctor or Athena coach before joining activities outside
+              your comfort zone.
             </p>
 
             {/* Action buttons */}
@@ -392,7 +446,15 @@ function EventDetail() {
   );
 }
 
-function Row({ icon, label, c }: { icon: React.ReactNode; label: string; c: ReturnType<typeof useColors> }) {
+function Row({
+  icon,
+  label,
+  c,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
     <div className="flex items-center gap-3 text-sm">
       <div
@@ -401,7 +463,9 @@ function Row({ icon, label, c }: { icon: React.ReactNode; label: string; c: Retu
       >
         {icon}
       </div>
-      <span className="font-medium" style={{ color: c.textSecondary }}>{label}</span>
+      <span className="font-medium" style={{ color: c.textSecondary }}>
+        {label}
+      </span>
     </div>
   );
 }

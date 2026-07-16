@@ -10,9 +10,7 @@ export function BadgeCard({ badge, size = "md" }: { badge: Badge; size?: "sm" | 
     <div
       className={cn(
         "relative rounded-2xl p-4 flex flex-col items-center text-center transition-all",
-        unlocked
-          ? "card-frosted hover:-translate-y-0.5"
-          : "card-frosted opacity-40",
+        unlocked ? "card-frosted hover:-translate-y-0.5" : "card-frosted opacity-40",
       )}
     >
       <div

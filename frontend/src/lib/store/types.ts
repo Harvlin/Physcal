@@ -7,9 +7,27 @@ export type HealthConditionDetail = {
   avoidances: string;
 };
 
+/** Distinguishes "I confirmed I have no conditions" from "I declined to share" */
+export type HealthDisclosureStatus = "confirmed_none" | "undisclosed" | "conditions_provided";
+
 export type HealthProfile = {
   conditions: HealthConditionDetail[];
   hasConditions: boolean;
+  disclosureStatus: HealthDisclosureStatus;
+};
+
+/**
+ * Persisted training preferences collected during onboarding.
+ * Survives resetOnboarding() because it lives in appSlice, not onboardingSlice.
+ * HealthProfile (conditions) is kept separate — don't fold it here.
+ */
+export type TrainingProfile = {
+  goals: string[];
+  fitnessLevel: string | undefined;
+  location: string | undefined;
+  timePerWeek: string | undefined;
+  confidence: number | undefined;
+  socialPreference: string | undefined;
 };
 
 // ─── Workout Session Types ───────────────────────────────────────
@@ -55,6 +73,14 @@ export type WorkoutSessionState = {
 
   // RPE self-report, keyed by exerciseId, recorded after interval/hold sets
   rpeLog: Record<string, number>;
+
+  pausedSessionSnapshot: {
+    sessionId: string;
+    activeExerciseId: string | null;
+    completedSets: Record<string, number>;
+    setLog: Record<string, SetLogEntry[]>;
+    usedWeights: Record<string, number>;
+  } | null;
 };
 
 // ─── Slice Types ───────────────────────────────────────────────
@@ -76,6 +102,7 @@ export type AppSliceType = {
   toggleHealthPanel: () => void;
 
   healthProfile: HealthProfile;
+  setHealthProfile: (profile: HealthProfile) => void;
 
   todaysPlan: Workout | null;
   setTodaysPlan: (w: Workout) => void;
@@ -86,6 +113,16 @@ export type AppSliceType = {
 
   weightUnit: "kg" | "lbs";
   setWeightUnit: (unit: "kg" | "lbs") => void;
+
+  // ─── Consolidated Training Profile (Part G) ───────────────────
+  trainingProfile: TrainingProfile | null;
+  setTrainingProfile: (profile: TrainingProfile) => void;
+
+  // ─── Multi-Sport Profile (Part B) ────────────────────────────
+  /** Sports the user added on top of their primary (pickedSportId from onboarding). */
+  additionalSportIds: string[];
+  addSport: (sportId: string) => void;
+  removeSport: (sportId: string) => void;
 };
 
 export type OnboardingSliceType = {
@@ -129,14 +166,21 @@ export type WorkoutSliceType = {
   startHold: (exerciseId: string, seconds: number) => void;
   tickHoldTimer: () => void;
   endHold: () => void;
-  
+
   startIntervalRound: (exerciseId: string, workSec: number) => void;
   tickIntervalTimer: () => void;
   setIntervalPhase: (phase: "work" | "rest" | null, seconds: number, round: number) => void;
   endInterval: () => void;
-  
+
   logRpe: (exerciseId: string, rpe: number) => void;
   completeDistanceSet: (exerciseId: string, durationMin: number, distanceKm: number) => void;
+
+  /**
+   * Inserts a drill from Movement Analysis into today's plan.
+   * The inserted exercise is tagged with fromAnalysis:true so Coach screens
+   * can display a "From your analysis" origin badge.
+   */
+  addDrillToPlan: (drill: { name: string; description: string }) => void;
 };
 
 export type AppState = AppSliceType & OnboardingSliceType & WorkoutSliceType;

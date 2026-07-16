@@ -30,23 +30,13 @@ function NudgesPage() {
                   : { background: c.chipBg, color: c.textTertiary }
               }
             >
-              {n.actedOn ? (
-                <Check size={14} strokeWidth={3} />
-              ) : (
-                <X size={14} />
-              )}
+              {n.actedOn ? <Check size={14} strokeWidth={3} /> : <X size={14} />}
             </div>
             <div className="flex-1">
-              <div
-                className="font-semibold text-sm"
-                style={{ color: c.textPrimary }}
-              >
+              <div className="font-semibold text-sm" style={{ color: c.textPrimary }}>
                 {n.headline}
               </div>
-              <div
-                className="text-xs mt-0.5"
-                style={{ color: c.textSecondary }}
-              >
+              <div className="text-xs mt-0.5" style={{ color: c.textSecondary }}>
                 {n.message}
               </div>
               <div

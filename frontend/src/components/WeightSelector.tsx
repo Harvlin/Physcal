@@ -36,8 +36,7 @@ export function WeightSelector({
   const weight = currentWeight ?? exercise.defaultWeight ?? 0;
   const step = weight >= 20 ? 1 : 0.5;
 
-  const hasSuggestion =
-    suggestedWeight !== undefined && suggestedWeight > weight;
+  const hasSuggestion = suggestedWeight !== undefined && suggestedWeight > weight;
 
   return (
     <div className="flex flex-col items-center gap-1.5">
@@ -83,7 +82,10 @@ export function WeightSelector({
 
       {/* Suggestion */}
       {hasSuggestion && (
-        <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: c.sunGlare }}>
+        <div
+          className="flex items-center gap-1 text-xs font-semibold"
+          style={{ color: c.sunGlare }}
+        >
           <TrendingUp size={12} />
           <span>
             suggested: {suggestedWeight} {unit}

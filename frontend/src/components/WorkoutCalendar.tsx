@@ -116,12 +116,15 @@ export function WorkoutCalendar({
             }}
             className="w-7 h-7 rounded-md grid place-items-center transition-colors"
             style={{ color: c.textTertiary }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <ChevronLeft size={14} />
           </button>
-          <span className="text-sm font-semibold px-1.5 min-w-[100px] text-center" style={{ color: c.textPrimary }}>
+          <span
+            className="text-sm font-semibold px-1.5 min-w-[100px] text-center"
+            style={{ color: c.textPrimary }}
+          >
             {mode === "week"
               ? "This week"
               : viewDate.toLocaleString("default", { month: "long", year: "numeric" })}
@@ -135,8 +138,8 @@ export function WorkoutCalendar({
             }}
             className="w-7 h-7 rounded-md grid place-items-center transition-colors"
             style={{ color: c.textTertiary }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <ChevronRight size={14} />
           </button>
@@ -145,8 +148,14 @@ export function WorkoutCalendar({
           onClick={() => setMode(mode === "week" ? "month" : "week")}
           className="text-xs flex items-center gap-1.5 px-2.5 h-7 rounded-md transition-colors"
           style={{ color: c.textTertiary }}
-          onMouseEnter={e => { e.currentTarget.style.background = c.hoverBg; e.currentTarget.style.color = c.textPrimary; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = c.textTertiary; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = c.hoverBg;
+            e.currentTarget.style.color = c.textPrimary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = c.textTertiary;
+          }}
         >
           {mode === "week" ? (
             <>
@@ -211,37 +220,49 @@ function WeekView({
             onClick={() => onSelect(d)}
             className="flex flex-col items-center gap-1.5 group"
           >
-            <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: c.textTertiary }}>
+            <span
+              className="text-[10px] uppercase tracking-wider font-semibold"
+              style={{ color: c.textTertiary }}
+            >
               {DOW_EN[(date.getDay() + 6) % 7]}
             </span>
             <span
               className="w-full aspect-square rounded-xl flex items-center justify-center text-xs font-medium font-mono relative transition-all"
               style={{
-                background: d.status === "done"
-                  ? c.sunGlareBg
-                  : isToday
+                background:
+                  d.status === "done"
+                    ? c.sunGlareBg
+                    : isToday
+                      ? c.sunGlare
+                      : d.status === "planned"
+                        ? c.chipBg
+                        : d.status === "rest"
+                          ? c.isDark
+                            ? "rgba(242,240,233,0.03)"
+                            : "rgba(28,28,26,0.03)"
+                          : d.status === "skipped"
+                            ? c.exuberantBg
+                            : "transparent",
+                color:
+                  d.status === "done"
                     ? c.sunGlare
-                    : d.status === "planned"
-                      ? c.chipBg
-                      : d.status === "rest"
-                        ? c.isDark ? "rgba(242,240,233,0.03)" : "rgba(28,28,26,0.03)"
-                        : d.status === "skipped"
-                          ? c.exuberantBg
-                          : "transparent",
-                color: d.status === "done"
-                  ? c.sunGlare
-                  : isToday
-                    ? "#1C1C1A"
-                    : d.status === "planned"
-                      ? c.textSecondary
-                      : d.status === "rest"
-                        ? c.textDisabled
-                        : d.status === "skipped"
-                          ? c.exuberant
-                          : c.textDisabled,
-                border: isSelected && !isToday ? `2px solid ${c.sunGlare}88` :
-                  d.status === "rest" ? `1px dashed ${c.inputBorder}` :
-                  d.status === "skipped" ? `1px dashed ${c.exuberant}33` : "none",
+                    : isToday
+                      ? "#1C1C1A"
+                      : d.status === "planned"
+                        ? c.textSecondary
+                        : d.status === "rest"
+                          ? c.textDisabled
+                          : d.status === "skipped"
+                            ? c.exuberant
+                            : c.textDisabled,
+                border:
+                  isSelected && !isToday
+                    ? `2px solid ${c.sunGlare}88`
+                    : d.status === "rest"
+                      ? `1px dashed ${c.inputBorder}`
+                      : d.status === "skipped"
+                        ? `1px dashed ${c.exuberant}33`
+                        : "none",
                 fontWeight: isToday ? 900 : 500,
               }}
             >
@@ -323,8 +344,14 @@ function MonthView({
                     ? `1px solid ${c.sunGlare}44`
                     : "none",
               }}
-              onMouseEnter={e => { if (!isToday && !isSelected) e.currentTarget.style.background = c.hoverBg; }}
-              onMouseLeave={e => { if (!isToday && !isSelected) e.currentTarget.style.background = d.status === "done" ? `${c.sunGlare}11` : "transparent"; }}
+              onMouseEnter={(e) => {
+                if (!isToday && !isSelected) e.currentTarget.style.background = c.hoverBg;
+              }}
+              onMouseLeave={(e) => {
+                if (!isToday && !isSelected)
+                  e.currentTarget.style.background =
+                    d.status === "done" ? `${c.sunGlare}11` : "transparent";
+              }}
             >
               <span
                 className="text-xs font-medium tabular-nums"
@@ -344,10 +371,18 @@ function MonthView({
               >
                 {dateNum}
               </span>
-              {d.status === "done" && <span className="w-1 h-1 rounded-full" style={{ background: c.sunGlare }} />}
-              {isToday && <span className="w-1 h-1 rounded-full" style={{ background: c.sunGlare }} />}
-              {d.status === "skipped" && <span className="w-1 h-1 rounded-full" style={{ background: c.exuberant }} />}
-              {d.status === "planned" && <span className="w-1 h-1 rounded-full" style={{ background: c.chipBorder }} />}
+              {d.status === "done" && (
+                <span className="w-1 h-1 rounded-full" style={{ background: c.sunGlare }} />
+              )}
+              {isToday && (
+                <span className="w-1 h-1 rounded-full" style={{ background: c.sunGlare }} />
+              )}
+              {d.status === "skipped" && (
+                <span className="w-1 h-1 rounded-full" style={{ background: c.exuberant }} />
+              )}
+              {d.status === "planned" && (
+                <span className="w-1 h-1 rounded-full" style={{ background: c.chipBorder }} />
+              )}
             </button>
           );
         })}
@@ -361,7 +396,15 @@ function MonthView({
   );
 }
 
-function Stat({ color, label, c }: { color: string; label: string; c: ReturnType<typeof useColors> }) {
+function Stat({
+  color,
+  label,
+  c,
+}: {
+  color: string;
+  label: string;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
     <div className="flex items-center gap-1.5 text-xs" style={{ color: c.textTertiary }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
@@ -370,7 +413,15 @@ function Stat({ color, label, c }: { color: string; label: string; c: ReturnType
   );
 }
 
-function DayPopover({ day, onClose, c }: { day: CalendarDay; onClose: () => void; c: ReturnType<typeof useColors> }) {
+function DayPopover({
+  day,
+  onClose,
+  c,
+}: {
+  day: CalendarDay;
+  onClose: () => void;
+  c: ReturnType<typeof useColors>;
+}) {
   const d = parseISO(day.date);
   const label = d.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "short" });
   return (
@@ -385,12 +436,14 @@ function DayPopover({ day, onClose, c }: { day: CalendarDay; onClose: () => void
         onClick={onClose}
         className="absolute top-2.5 right-2.5 w-7 h-7 grid place-items-center rounded-lg transition-colors"
         style={{ color: c.textTertiary }}
-        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         <X size={13} />
       </button>
-      <div className="text-xs font-semibold pr-6" style={{ color: c.textTertiary }}>{label}</div>
+      <div className="text-xs font-semibold pr-6" style={{ color: c.textTertiary }}>
+        {label}
+      </div>
       <div className="mt-2.5">
         {day.status === "today" && day.workout && (
           <>
@@ -411,23 +464,39 @@ function DayPopover({ day, onClose, c }: { day: CalendarDay; onClose: () => void
           <>
             <span
               className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
-              style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33` }}
+              style={{
+                background: c.sunGlareBg,
+                color: c.sunGlare,
+                border: `1px solid ${c.sunGlare}33`,
+              }}
             >
               ✓ Completed
             </span>
             <div className="text-sm font-semibold mt-2" style={{ color: c.textPrimary }}>
               {day.workout?.title ?? "Session"} · {day.workout?.duration ?? 30} min
             </div>
-            <button className="text-xs font-bold hover:underline mt-3" style={{ color: c.sunGlare }}>View details →</button>
+            <button
+              className="text-xs font-bold hover:underline mt-3"
+              style={{ color: c.sunGlare }}
+            >
+              View details →
+            </button>
           </>
         )}
         {day.status === "planned" && (
           <>
-            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>{day.workout?.title ?? "Workout"}</div>
+            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>
+              {day.workout?.title ?? "Workout"}
+            </div>
             <div className="text-xs mt-0.5" style={{ color: c.textTertiary }}>
               {day.workout?.duration ?? 30} min · planned
             </div>
-            <button className="text-xs font-bold hover:underline mt-3" style={{ color: c.textSecondary }}>Edit plan</button>
+            <button
+              className="text-xs font-bold hover:underline mt-3"
+              style={{ color: c.textSecondary }}
+            >
+              Edit plan
+            </button>
           </>
         )}
         {day.status === "rest" && (
@@ -447,11 +516,20 @@ function DayPopover({ day, onClose, c }: { day: CalendarDay; onClose: () => void
           <>
             <span
               className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
-              style={{ background: c.exuberantBg, color: c.exuberant, border: `1px solid ${c.exuberant}33` }}
+              style={{
+                background: c.exuberantBg,
+                color: c.exuberant,
+                border: `1px solid ${c.exuberant}33`,
+              }}
             >
               Skipped
             </span>
-            <button className="block text-xs font-bold hover:underline mt-3" style={{ color: c.textTertiary }}>Log reason</button>
+            <button
+              className="block text-xs font-bold hover:underline mt-3"
+              style={{ color: c.textTertiary }}
+            >
+              Log reason
+            </button>
           </>
         )}
       </div>

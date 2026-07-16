@@ -7,9 +7,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Physcal — Move beyond your limits with AI" },
-      { name: "description", content: "AI-powered inclusive sports platform for beginners, women, and people with accessibility needs." },
+      {
+        name: "description",
+        content:
+          "AI-powered inclusive sports platform for beginners, women, and people with accessibility needs.",
+      },
       { property: "og:title", content: "Physcal — Move beyond your limits with AI" },
-      { property: "og:description", content: "Sport is for everyone. Adaptive coaching, real community, movement that respects your body." },
+      {
+        property: "og:description",
+        content:
+          "Sport is for everyone. Adaptive coaching, real community, movement that respects your body.",
+      },
     ],
   }),
   component: LandingPage,
@@ -17,10 +25,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div
-      className="text-white font-sans"
-      style={{ background: "#0A0A0A", overflowX: "clip" }}
-    >
+    <div className="text-white font-sans" style={{ background: "#0A0A0A", overflowX: "clip" }}>
       <Header />
       <HeroSection />
       <StorySection />
@@ -49,7 +54,10 @@ function Header() {
         <span className="font-bold text-xl tracking-tight">Physcal</span>
       </div>
       <div className="flex items-center gap-4">
-        <Link to="/login" className="text-sm font-semibold text-white/80 hover:text-white transition-colors">
+        <Link
+          to="/login"
+          className="text-sm font-semibold text-white/80 hover:text-white transition-colors"
+        >
           Sign In
         </Link>
         <Link
@@ -73,11 +81,11 @@ function HeroSection() {
 
   const clipInset = useTransform(smooth, [0, 1], [0, 7]);
   const clipRadius = useTransform(smooth, [0, 1], [0, 40]);
-  const opacity    = useTransform(smooth, [0.6, 1], [1, 0]);
-  const scale      = useTransform(smooth, [0, 1], [1, 1.04]);
-  const clipPath   = useTransform(
+  const opacity = useTransform(smooth, [0.6, 1], [1, 0]);
+  const scale = useTransform(smooth, [0, 1], [1, 1.04]);
+  const clipPath = useTransform(
     [clipInset, clipRadius],
-    ([i, r]: number[]) => `inset(${i}% round ${r}px)`
+    ([i, r]: number[]) => `inset(${i}% round ${r}px)`,
   );
 
   return (
@@ -87,11 +95,12 @@ function HeroSection() {
         className="sticky top-0 w-full overflow-hidden flex items-center justify-center"
       >
         {/* ── Video panel with morph clip-path ── */}
-        <motion.div
-          style={{ clipPath, position: "absolute", inset: 0 }}
-        >
+        <motion.div style={{ clipPath, position: "absolute", inset: 0 }}>
           <motion.video
-            autoPlay muted loop playsInline
+            autoPlay
+            muted
+            loop
+            playsInline
             style={{ scale }}
             className="absolute inset-0 w-full h-full object-cover opacity-55"
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260511_131941_d136af49-e243-493a-be14-6ff3f24e09e6.mp4"
@@ -108,8 +117,6 @@ function HeroSection() {
 
         {/* ── Hero copy ── */}
         <div className="relative z-10 text-center px-5 max-w-5xl mx-auto pt-16">
-
-
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,17 +161,30 @@ function Word({ word, progress, range }: { word: string; progress: any; range: [
 function StorySection() {
   const ref = useRef<HTMLParagraphElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 55%"] });
-  const words = "Sport is for everyone. We believe in adaptive coaching, real community, and movement that respects your body. Welcome to the future of fitness.".split(" ");
+  const words =
+    "Sport is for everyone. We believe in adaptive coaching, real community, and movement that respects your body. Welcome to the future of fitness.".split(
+      " ",
+    );
 
   return (
     <section
       className="relative z-10 flex items-center justify-center px-6 lg:px-12"
-      style={{ minHeight: "100vh", paddingTop: "8rem", paddingBottom: "8rem", background: "#0A0A0A" }}
+      style={{
+        minHeight: "100vh",
+        paddingTop: "8rem",
+        paddingBottom: "8rem",
+        background: "#0A0A0A",
+      }}
     >
       <p
         ref={ref}
         className="flex flex-wrap justify-center text-white font-bold"
-        style={{ fontSize: "clamp(28px, 5vw, 68px)", lineHeight: 1.15, maxWidth: "1100px", gap: "0.3em 0.35em" }}
+        style={{
+          fontSize: "clamp(28px, 5vw, 68px)",
+          lineHeight: 1.15,
+          maxWidth: "1100px",
+          gap: "0.3em 0.35em",
+        }}
       >
         {words.map((word, i) => (
           <Word
@@ -186,10 +206,19 @@ function FeaturesBento() {
   return (
     <section
       className="relative z-10 px-6 lg:px-12"
-      style={{ paddingTop: "8rem", paddingBottom: "8rem", background: "#0A0A0A", maxWidth: "1400px", margin: "0 auto" }}
+      style={{
+        paddingTop: "8rem",
+        paddingBottom: "8rem",
+        background: "#0A0A0A",
+        maxWidth: "1400px",
+        margin: "0 auto",
+      }}
     >
       <div style={{ marginBottom: "4rem" }}>
-        <h2 className="font-bold tracking-tight" style={{ fontSize: "clamp(32px, 5vw, 60px)", lineHeight: 1.1 }}>
+        <h2
+          className="font-bold tracking-tight"
+          style={{ fontSize: "clamp(32px, 5vw, 60px)", lineHeight: 1.1 }}
+        >
           Intelligence
           <br />
           <span style={{ color: "rgba(255,255,255,0.3)" }}>in every movement</span>
@@ -204,16 +233,29 @@ function FeaturesBento() {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.65 }}
           className="md:col-span-2 md:row-span-2 relative group overflow-hidden flex flex-col justify-end p-10 md:p-14"
-          style={{ borderRadius: "36px", background: "#121212", border: "1px solid rgba(255,255,255,0.05)" }}
+          style={{
+            borderRadius: "36px",
+            background: "#121212",
+            border: "1px solid rgba(255,255,255,0.05)",
+          }}
         >
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-            style={{ background: "radial-gradient(ellipse at 30% 80%, rgba(214,232,0,0.08) 0%, transparent 60%)" }}
+            style={{
+              background:
+                "radial-gradient(ellipse at 30% 80%, rgba(214,232,0,0.08) 0%, transparent 60%)",
+            }}
           />
           <Activity size={44} style={{ color: "#D6E800", marginBottom: "1.5rem" }} />
-          <h3 className="font-bold mb-3" style={{ fontSize: "clamp(28px, 3.5vw, 48px)" }}>Adaptive AI Coaching</h3>
-          <p className="text-xl leading-relaxed" style={{ color: "rgba(255,255,255,0.45)", maxWidth: "420px" }}>
-            Your workout plan evolves in real-time based on your feedback, energy levels, and physical conditions.
+          <h3 className="font-bold mb-3" style={{ fontSize: "clamp(28px, 3.5vw, 48px)" }}>
+            Adaptive AI Coaching
+          </h3>
+          <p
+            className="text-xl leading-relaxed"
+            style={{ color: "rgba(255,255,255,0.45)", maxWidth: "420px" }}
+          >
+            Your workout plan evolves in real-time based on your feedback, energy levels, and
+            physical conditions.
           </p>
         </motion.div>
 
@@ -224,15 +266,24 @@ function FeaturesBento() {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.65, delay: 0.15 }}
           className="relative group overflow-hidden flex flex-col justify-end p-10"
-          style={{ borderRadius: "36px", background: "#121212", border: "1px solid rgba(255,255,255,0.05)" }}
+          style={{
+            borderRadius: "36px",
+            background: "#121212",
+            border: "1px solid rgba(255,255,255,0.05)",
+          }}
         >
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-            style={{ background: "radial-gradient(ellipse at 30% 80%, rgba(245,82,42,0.08) 0%, transparent 60%)" }}
+            style={{
+              background:
+                "radial-gradient(ellipse at 30% 80%, rgba(245,82,42,0.08) 0%, transparent 60%)",
+            }}
           />
           <Shield size={32} style={{ color: "#F5522A", marginBottom: "1rem" }} />
           <h3 className="text-2xl font-bold mb-2">Injury Prevention</h3>
-          <p style={{ color: "rgba(255,255,255,0.45)" }}>Smart modifications to keep you safe and consistent.</p>
+          <p style={{ color: "rgba(255,255,255,0.45)" }}>
+            Smart modifications to keep you safe and consistent.
+          </p>
         </motion.div>
 
         {/* Small card 2 */}
@@ -242,15 +293,24 @@ function FeaturesBento() {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.65, delay: 0.25 }}
           className="relative group overflow-hidden flex flex-col justify-end p-10"
-          style={{ borderRadius: "36px", background: "#121212", border: "1px solid rgba(255,255,255,0.05)" }}
+          style={{
+            borderRadius: "36px",
+            background: "#121212",
+            border: "1px solid rgba(255,255,255,0.05)",
+          }}
         >
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-            style={{ background: "radial-gradient(ellipse at 30% 80%, rgba(107,95,195,0.08) 0%, transparent 60%)" }}
+            style={{
+              background:
+                "radial-gradient(ellipse at 30% 80%, rgba(107,95,195,0.08) 0%, transparent 60%)",
+            }}
           />
           <HeartPulse size={32} style={{ color: "#6B5FC3", marginBottom: "1rem" }} />
           <h3 className="text-2xl font-bold mb-2">Holistic Health</h3>
-          <p style={{ color: "rgba(255,255,255,0.45)" }}>Integrating sleep, stress, and recovery into your routine.</p>
+          <p style={{ color: "rgba(255,255,255,0.45)" }}>
+            Integrating sleep, stress, and recovery into your routine.
+          </p>
         </motion.div>
       </div>
     </section>
@@ -338,17 +398,36 @@ function HorizontalScroll() {
               }}
             >
               <h2
-                style={{ fontSize: "clamp(56px, 8.5vw, 128px)", color: p.numColor, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.03em", lineHeight: 1, userSelect: "none" }}
+                style={{
+                  fontSize: "clamp(56px, 8.5vw, 128px)",
+                  color: p.numColor,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1,
+                  userSelect: "none",
+                }}
               >
                 {p.num}
               </h2>
               <h3
-                style={{ fontSize: "clamp(36px, 5.5vw, 82px)", color: p.titleColor, fontWeight: 700, marginTop: "0.5rem" }}
+                style={{
+                  fontSize: "clamp(36px, 5.5vw, 82px)",
+                  color: p.titleColor,
+                  fontWeight: 700,
+                  marginTop: "0.5rem",
+                }}
               >
                 {p.title}
               </h3>
               <p
-                style={{ fontSize: "clamp(15px, 1.4vw, 20px)", color: "rgba(255,255,255,0.45)", maxWidth: "500px", lineHeight: 1.7, marginTop: "1.25rem" }}
+                style={{
+                  fontSize: "clamp(15px, 1.4vw, 20px)",
+                  color: "rgba(255,255,255,0.45)",
+                  maxWidth: "500px",
+                  lineHeight: 1.7,
+                  marginTop: "1.25rem",
+                }}
               >
                 {p.body}
               </p>
@@ -357,21 +436,63 @@ function HorizontalScroll() {
         </motion.div>
 
         {/* Dots */}
-        <div style={{ position: "absolute", bottom: "2.5rem", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "0.75rem" }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "2.5rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: "0.75rem",
+          }}
+        >
           {PHASES.map((_, i) => (
-            <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(255,255,255,0.2)" }} />
+            <div
+              key={i}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.2)",
+              }}
+            />
           ))}
         </div>
 
         {/* Scroll hint */}
-        <div style={{ position: "absolute", bottom: "2.5rem", right: "2.5rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "rgba(255,255,255,0.2)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 600 }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "2.5rem",
+            right: "2.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            color: "rgba(255,255,255,0.2)",
+            fontSize: "11px",
+            textTransform: "uppercase",
+            letterSpacing: "0.15em",
+            fontWeight: 600,
+          }}
+        >
           <span>Scroll</span>
-          <motion.span animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}>↓</motion.span>
+          <motion.span
+            animate={{ y: [0, 4, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+          >
+            ↓
+          </motion.span>
         </div>
 
         {/* Exit veil — seamless dissolve into FooterCTA */}
         <motion.div
-          style={{ position: "absolute", inset: 0, background: "#0A0A0A", opacity: exitVeil, pointerEvents: "none" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "#0A0A0A",
+            opacity: exitVeil,
+            pointerEvents: "none",
+          }}
         />
       </div>
     </div>
@@ -387,12 +508,12 @@ function FooterCTA() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "center center"] });
   const smooth = useSpring(scrollYProgress, { damping: 24, stiffness: 100 });
 
-  const headingY   = useTransform(smooth, [0, 0.65], [56, 0]);
-  const headingOp  = useTransform(smooth, [0, 0.55], [0, 1]);
-  const subY       = useTransform(smooth, [0.25, 0.8], [36, 0]);
-  const subOp      = useTransform(smooth, [0.25, 0.8], [0, 1]);
-  const btnY       = useTransform(smooth, [0.45, 1], [28, 0]);
-  const btnOp      = useTransform(smooth, [0.45, 1], [0, 1]);
+  const headingY = useTransform(smooth, [0, 0.65], [56, 0]);
+  const headingOp = useTransform(smooth, [0, 0.55], [0, 1]);
+  const subY = useTransform(smooth, [0.25, 0.8], [36, 0]);
+  const subOp = useTransform(smooth, [0.25, 0.8], [0, 1]);
+  const btnY = useTransform(smooth, [0.45, 1], [28, 0]);
+  const btnOp = useTransform(smooth, [0.45, 1], [0, 1]);
 
   return (
     <section
@@ -411,8 +532,10 @@ function FooterCTA() {
       <div
         className="absolute pointer-events-none"
         style={{
-          top: "-10rem", right: "-10rem",
-          width: "480px", height: "480px",
+          top: "-10rem",
+          right: "-10rem",
+          width: "480px",
+          height: "480px",
           borderRadius: "50%",
           background: "radial-gradient(circle, rgba(0,0,0,0.07) 0%, transparent 70%)",
         }}
@@ -420,8 +543,10 @@ function FooterCTA() {
       <div
         className="absolute pointer-events-none"
         style={{
-          bottom: "-8rem", left: "-8rem",
-          width: "320px", height: "320px",
+          bottom: "-8rem",
+          left: "-8rem",
+          width: "320px",
+          height: "320px",
           borderRadius: "50%",
           background: "radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)",
         }}
@@ -431,19 +556,34 @@ function FooterCTA() {
         {/* Clip container so heading slides up from clipped edge */}
         <div style={{ overflow: "hidden", paddingBottom: "0.1em" }}>
           <motion.h2
-            style={{ y: headingY, opacity: headingOp, lineHeight: 0.88, fontSize: "clamp(60px, 13vw, 160px)" }}
+            style={{
+              y: headingY,
+              opacity: headingOp,
+              lineHeight: 0.88,
+              fontSize: "clamp(60px, 13vw, 160px)",
+            }}
             className="font-black tracking-tighter uppercase"
           >
-            Start<br />Moving
+            Start
+            <br />
+            Moving
           </motion.h2>
         </div>
 
         <motion.p
-          style={{ y: subY, opacity: subOp, fontSize: "clamp(16px, 1.4vw, 20px)", color: "rgba(0,0,0,0.55)", maxWidth: "360px", margin: "1.5rem auto 0" }}
+          style={{
+            y: subY,
+            opacity: subOp,
+            fontSize: "clamp(16px, 1.4vw, 20px)",
+            color: "rgba(0,0,0,0.55)",
+            maxWidth: "360px",
+            margin: "1.5rem auto 0",
+          }}
           className="mt-6 leading-relaxed"
         >
           Adaptive coaching for every body.
-          <br />Start free — no equipment needed.
+          <br />
+          Start free — no equipment needed.
         </motion.p>
 
         <motion.div
@@ -464,7 +604,10 @@ function FooterCTA() {
           >
             <span className="relative z-10 flex items-center gap-3">
               Join Physcal
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight
+                size={20}
+                className="group-hover:translate-x-1 transition-transform duration-300"
+              />
             </span>
             {/* Orange fill on hover */}
             <span
@@ -474,8 +617,12 @@ function FooterCTA() {
                 transform: "translateY(100%)",
                 transition: "transform 0.5s cubic-bezier(0.16,1,0.3,1)",
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.transform = "translateY(0)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLSpanElement).style.transform = "translateY(100%)"; }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLSpanElement).style.transform = "translateY(0)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLSpanElement).style.transform = "translateY(100%)";
+              }}
             />
           </Link>
         </motion.div>
@@ -500,10 +647,14 @@ function Footer() {
         </div>
         <div className="flex items-center gap-8" style={{ color: "rgba(0,0,0,0.55)" }}>
           {["About", "Community", "Privacy", "Contact"].map((l) => (
-            <a key={l} href="#" className="hover:text-black transition-colors text-sm">{l}</a>
+            <a key={l} href="#" className="hover:text-black transition-colors text-sm">
+              {l}
+            </a>
           ))}
         </div>
-        <div className="text-sm" style={{ color: "rgba(0,0,0,0.35)" }}>© 2026 Physcal</div>
+        <div className="text-sm" style={{ color: "rgba(0,0,0,0.35)" }}>
+          © 2026 Physcal
+        </div>
       </div>
     </footer>
   );

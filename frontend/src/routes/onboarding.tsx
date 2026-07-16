@@ -66,12 +66,58 @@ function OnboardingPage() {
   const resetOnboarding = useApp((s) => s.resetOnboarding);
   const setBodyWeightGoal = useApp((s) => s.setBodyWeightGoal);
   const setWeightUnit = useApp((s) => s.setWeightUnit);
+  const setTrainingProfile = useApp((s) => s.setTrainingProfile);
+  const setHealthProfile = useApp((s) => s.setHealthProfile);
   const navigate = useNavigate();
   const c = useColors();
 
   const finishOnboarding = () => {
+    // Persist weight settings
     setWeightUnit(onboarding.weightUnit);
     setBodyWeightGoal({ current: onboarding.currentWeight, goal: onboarding.goalWeight });
+
+    // Derive and persist TrainingProfile (Part G)
+    const socialMap: Record<string, string> = {
+      Solo: "solo",
+      "With a partner": "with_partner",
+      "Small group": "small_group",
+      "Any is fine": "any",
+    };
+    setTrainingProfile({
+      goals: onboarding.goals,
+      fitnessLevel: onboarding.fitnessLevel,
+      location: onboarding.location,
+      timePerWeek: onboarding.timePerWeek,
+      confidence: onboarding.confidence,
+      socialPreference: onboarding.social
+        ? (socialMap[onboarding.social] ?? onboarding.social)
+        : undefined,
+    });
+
+    // Derive and persist HealthProfile with disclosure status (Part H)
+    const selectedPhysical = onboarding.physical;
+    let disclosureStatus: import("@/lib/store/types").HealthDisclosureStatus;
+    if (selectedPhysical.includes("Prefer not to say")) {
+      disclosureStatus = "undisclosed";
+    } else if (selectedPhysical.includes("None") || selectedPhysical.length === 0) {
+      disclosureStatus = "confirmed_none";
+    } else {
+      disclosureStatus = "conditions_provided";
+    }
+
+    const conditions = Object.entries(onboarding.physicalDetails).map(([type, d]) => ({
+      type,
+      details: (d.details ?? {}) as Record<string, string | string[]>,
+      severity: d.severity ?? "mild",
+      avoidances: d.avoidances ?? "",
+    }));
+
+    setHealthProfile({
+      hasConditions: disclosureStatus === "conditions_provided",
+      disclosureStatus,
+      conditions,
+    });
+
     resetOnboarding();
   };
 
@@ -94,7 +140,8 @@ function OnboardingPage() {
     };
   }, [loading]);
 
-  const needsWeightStep = onboarding.goals.includes("weight") || onboarding.goals.includes("gain_weight");
+  const needsWeightStep =
+    onboarding.goals.includes("weight") || onboarding.goals.includes("gain_weight");
 
   const next = () => {
     if (step === 3) {
@@ -124,7 +171,13 @@ function OnboardingPage() {
 
   const canContinue = (() => {
     if (step === 1) return onboarding.goals.length > 0;
-    if (step === 1.5) return onboarding.currentWeight !== null && onboarding.goalWeight !== null && onboarding.currentWeight > 0 && onboarding.goalWeight > 0;
+    if (step === 1.5)
+      return (
+        onboarding.currentWeight !== null &&
+        onboarding.goalWeight !== null &&
+        onboarding.currentWeight > 0 &&
+        onboarding.goalWeight > 0
+      );
     if (step === 2)
       return (
         onboarding.fitnessLevel &&
@@ -139,7 +192,10 @@ function OnboardingPage() {
   const progress = step / 4;
 
   return (
-    <div className="app-stage min-h-dvh flex flex-col" style={{ background: c.appBg, color: c.textPrimary }}>
+    <div
+      className="app-stage min-h-dvh flex flex-col"
+      style={{ background: c.appBg, color: c.textPrimary }}
+    >
       <div className="h-1" style={{ background: c.divider }}>
         <motion.div
           style={{ height: "100%", background: c.sunGlare, boxShadow: `0 0 8px ${c.sunGlareBg}` }}
@@ -161,7 +217,14 @@ function OnboardingPage() {
           <div className="w-10" />
         )}
         {step === 1 && (
-          <Link to="/dashboard" onClick={() => finishOnboarding()} className="text-sm transition-colors" style={{ color: c.textTertiary }} onMouseEnter={e => e.currentTarget.style.color = c.textPrimary} onMouseLeave={e => e.currentTarget.style.color = c.textTertiary}>
+          <Link
+            to="/dashboard"
+            onClick={() => finishOnboarding()}
+            className="text-sm transition-colors"
+            style={{ color: c.textTertiary }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = c.textPrimary)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = c.textTertiary)}
+          >
             Skip
           </Link>
         )}
@@ -172,7 +235,12 @@ function OnboardingPage() {
           <AnimatePresence mode="wait" custom={direction}>
             {step === 1 && !loading && !showResult && (
               <motion.div key="s1" {...slide(direction)}>
-                <h1 className="text-3xl sm:text-4xl font-semibold mb-2" style={{ color: c.textPrimary }}>What brings you here?</h1>
+                <h1
+                  className="text-3xl sm:text-4xl font-semibold mb-2"
+                  style={{ color: c.textPrimary }}
+                >
+                  What brings you here?
+                </h1>
                 <p className="mb-8" style={{ color: c.textSecondary }}>
                   Pick everything that applies. We'll personalize from here.
                 </p>
@@ -190,23 +258,42 @@ function OnboardingPage() {
                               : [...onboarding.goals, g.id],
                           })
                         }
-                      className={cn(
+                        className={cn(
                           "p-5 rounded-[28px] border text-left transition-all active:scale-[0.97]",
                         )}
                         style={
                           active
-                            ? { background: c.sunGlareBg, border: `1px solid ${c.sunGlare}44`, boxShadow: `0 0 24px ${c.sunGlareBg}` }
+                            ? {
+                                background: c.sunGlareBg,
+                                border: `1px solid ${c.sunGlare}44`,
+                                boxShadow: `0 0 24px ${c.sunGlareBg}`,
+                              }
                             : { background: c.chipBg, border: `1px solid ${c.chipBorder}` }
                         }
                       >
-                        <div className={cn(
-                          "w-9 h-9 rounded-xl grid place-items-center mb-2 transition-colors",
-                        )}
-                          style={active ? { background: `${c.sunGlare}22`, color: c.sunGlare } : { background: c.isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", color: c.textSecondary }}
+                        <div
+                          className={cn(
+                            "w-9 h-9 rounded-xl grid place-items-center mb-2 transition-colors",
+                          )}
+                          style={
+                            active
+                              ? { background: `${c.sunGlare}22`, color: c.sunGlare }
+                              : {
+                                  background: c.isDark
+                                    ? "rgba(255,255,255,0.08)"
+                                    : "rgba(0,0,0,0.05)",
+                                  color: c.textSecondary,
+                                }
+                          }
                         >
                           <Icon size={18} />
                         </div>
-                        <div className="font-bold text-[15px] leading-tight" style={{ color: active ? c.sunGlare : c.textPrimary }}>{g.label}</div>
+                        <div
+                          className="font-bold text-[15px] leading-tight"
+                          style={{ color: active ? c.sunGlare : c.textPrimary }}
+                        >
+                          {g.label}
+                        </div>
                       </button>
                     );
                   })}
@@ -216,24 +303,42 @@ function OnboardingPage() {
 
             {step === 1.5 && (
               <motion.div key="s15" {...slide(direction)} className="space-y-7">
-                <h1 className="text-3xl sm:text-4xl font-semibold mb-2" style={{ color: c.textPrimary }}>Let's set a target</h1>
-                
+                <h1
+                  className="text-3xl sm:text-4xl font-semibold mb-2"
+                  style={{ color: c.textPrimary }}
+                >
+                  Let's set a target
+                </h1>
+
                 <div className="card-frosted p-5">
                   <div className="flex justify-between items-center mb-5">
-                    <div className="text-sm font-medium" style={{ color: c.textPrimary }}>Weight Goal</div>
-                    <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: c.chipBorder }}>
+                    <div className="text-sm font-medium" style={{ color: c.textPrimary }}>
+                      Weight Goal
+                    </div>
+                    <div
+                      className="flex rounded-lg overflow-hidden border"
+                      style={{ borderColor: c.chipBorder }}
+                    >
                       <button
                         onClick={() => {
                           if (onboarding.weightUnit !== "kg") {
                             setOnboarding({
                               weightUnit: "kg",
-                              currentWeight: onboarding.currentWeight ? Number((onboarding.currentWeight / 2.2046).toFixed(1)) : null,
-                              goalWeight: onboarding.goalWeight ? Number((onboarding.goalWeight / 2.2046).toFixed(1)) : null,
+                              currentWeight: onboarding.currentWeight
+                                ? Number((onboarding.currentWeight / 2.2046).toFixed(1))
+                                : null,
+                              goalWeight: onboarding.goalWeight
+                                ? Number((onboarding.goalWeight / 2.2046).toFixed(1))
+                                : null,
                             });
                           }
                         }}
                         className="px-3 py-1.5 text-xs font-bold transition-colors"
-                        style={onboarding.weightUnit === "kg" ? { background: c.sunGlare, color: c.appBg } : { background: c.chipBg, color: c.textSecondary }}
+                        style={
+                          onboarding.weightUnit === "kg"
+                            ? { background: c.sunGlare, color: c.appBg }
+                            : { background: c.chipBg, color: c.textSecondary }
+                        }
                       >
                         kg
                       </button>
@@ -242,43 +347,77 @@ function OnboardingPage() {
                           if (onboarding.weightUnit !== "lbs") {
                             setOnboarding({
                               weightUnit: "lbs",
-                              currentWeight: onboarding.currentWeight ? Number((onboarding.currentWeight * 2.2046).toFixed(1)) : null,
-                              goalWeight: onboarding.goalWeight ? Number((onboarding.goalWeight * 2.2046).toFixed(1)) : null,
+                              currentWeight: onboarding.currentWeight
+                                ? Number((onboarding.currentWeight * 2.2046).toFixed(1))
+                                : null,
+                              goalWeight: onboarding.goalWeight
+                                ? Number((onboarding.goalWeight * 2.2046).toFixed(1))
+                                : null,
                             });
                           }
                         }}
                         className="px-3 py-1.5 text-xs font-bold transition-colors"
-                        style={onboarding.weightUnit === "lbs" ? { background: c.sunGlare, color: c.appBg } : { background: c.chipBg, color: c.textSecondary }}
+                        style={
+                          onboarding.weightUnit === "lbs"
+                            ? { background: c.sunGlare, color: c.appBg }
+                            : { background: c.chipBg, color: c.textSecondary }
+                        }
                       >
                         lbs
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block text-xs mb-1 font-semibold" style={{ color: c.textSecondary }}>Current</label>
+                      <label
+                        className="block text-xs mb-1 font-semibold"
+                        style={{ color: c.textSecondary }}
+                      >
+                        Current
+                      </label>
                       <input
                         type="number"
                         value={onboarding.currentWeight ?? ""}
-                        onChange={(e) => setOnboarding({ currentWeight: e.target.value ? Number(e.target.value) : null })}
+                        onChange={(e) =>
+                          setOnboarding({
+                            currentWeight: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
                         className="w-full rounded-lg px-4 py-3 text-lg font-bold focus:outline-none transition-colors"
-                        style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
-                        onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-                        onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                        style={{
+                          background: c.inputBg,
+                          color: c.textPrimary,
+                          border: `1px solid ${c.inputBorder}`,
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
                         placeholder="0.0"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs mb-1 font-semibold" style={{ color: c.textSecondary }}>Goal</label>
+                      <label
+                        className="block text-xs mb-1 font-semibold"
+                        style={{ color: c.textSecondary }}
+                      >
+                        Goal
+                      </label>
                       <input
                         type="number"
                         value={onboarding.goalWeight ?? ""}
-                        onChange={(e) => setOnboarding({ goalWeight: e.target.value ? Number(e.target.value) : null })}
+                        onChange={(e) =>
+                          setOnboarding({
+                            goalWeight: e.target.value ? Number(e.target.value) : null,
+                          })
+                        }
                         className="w-full rounded-lg px-4 py-3 text-lg font-bold focus:outline-none transition-colors"
-                        style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
-                        onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-                        onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                        style={{
+                          background: c.inputBg,
+                          color: c.textPrimary,
+                          border: `1px solid ${c.inputBorder}`,
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
                         placeholder="0.0"
                       />
                     </div>
@@ -289,7 +428,12 @@ function OnboardingPage() {
 
             {step === 2 && (
               <motion.div key="s2" {...slide(direction)} className="space-y-7">
-                <h1 className="text-3xl sm:text-4xl font-semibold mb-2" style={{ color: c.textPrimary }}>Tell us about yourself</h1>
+                <h1
+                  className="text-3xl sm:text-4xl font-semibold mb-2"
+                  style={{ color: c.textPrimary }}
+                >
+                  Tell us about yourself
+                </h1>
                 <Pills
                   label="Fitness level"
                   options={fitnessLevels}
@@ -312,7 +456,9 @@ function OnboardingPage() {
                   c={c}
                 />
                 <div>
-                  <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>How do you feel about exercise?</div>
+                  <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>
+                    How do you feel about exercise?
+                  </div>
                   <div className="grid grid-cols-5 gap-2">
                     {confidenceLevels.map((conf) => {
                       const active = onboarding.confidence === conf.value;
@@ -323,10 +469,30 @@ function OnboardingPage() {
                           className={cn(
                             "flex flex-col items-center justify-center gap-1 h-14 rounded-xl border-2 transition-all active:scale-95",
                           )}
-                          style={active ? { background: c.sunGlareBg, border: `1px solid ${c.sunGlare}66` } : { background: c.chipBg, border: `1px solid transparent` }}
+                          style={
+                            active
+                              ? { background: c.sunGlareBg, border: `1px solid ${c.sunGlare}66` }
+                              : { background: c.chipBg, border: `1px solid transparent` }
+                          }
                         >
-                          <span style={{ fontSize: "14px", fontWeight: 700, color: active ? c.sunGlare : c.textPrimary }}>{conf.value}</span>
-                          <span style={{ fontSize: "10px", lineHeight: 1.2, color: active ? c.sunGlare : c.textSecondary }}>{conf.label}</span>
+                          <span
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: 700,
+                              color: active ? c.sunGlare : c.textPrimary,
+                            }}
+                          >
+                            {conf.value}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              lineHeight: 1.2,
+                              color: active ? c.sunGlare : c.textSecondary,
+                            }}
+                          >
+                            {conf.label}
+                          </span>
                         </button>
                       );
                     })}
@@ -338,11 +504,20 @@ function OnboardingPage() {
             {step === 3 && (
               <motion.div key="s3" {...slide(direction)} className="space-y-7">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-semibold" style={{ color: c.textPrimary }}>We want to get this right</h1>
-                  <p className="mt-2" style={{ color: c.textSecondary }}>This helps us personalize your experience.</p>
+                  <h1
+                    className="text-3xl sm:text-4xl font-semibold"
+                    style={{ color: c.textPrimary }}
+                  >
+                    We want to get this right
+                  </h1>
+                  <p className="mt-2" style={{ color: c.textSecondary }}>
+                    This helps us personalize your experience.
+                  </p>
                 </div>
                 <div>
-                  <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>Any physical considerations?</div>
+                  <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>
+                    Any physical considerations?
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {physicalOptions.map((p) => {
                       const active = onboarding.physical.includes(p);
@@ -355,14 +530,31 @@ function OnboardingPage() {
                             } else {
                               const next = active
                                 ? onboarding.physical.filter((x) => x !== p)
-                                : [...onboarding.physical.filter((x) => x !== "None" && x !== "Prefer not to say"), p];
+                                : [
+                                    ...onboarding.physical.filter(
+                                      (x) => x !== "None" && x !== "Prefer not to say",
+                                    ),
+                                    p,
+                                  ];
                               setOnboarding({ physical: next });
                             }
                           }}
                           className={cn(
                             "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all active:scale-95",
                           )}
-                          style={active ? { background: c.textPrimary, color: c.appBg, border: `2px solid ${c.textPrimary}` } : { background: c.chipBg, color: c.textPrimary, border: `2px solid transparent` }}
+                          style={
+                            active
+                              ? {
+                                  background: c.textPrimary,
+                                  color: c.appBg,
+                                  border: `2px solid ${c.textPrimary}`,
+                                }
+                              : {
+                                  background: c.chipBg,
+                                  color: c.textPrimary,
+                                  border: `2px solid transparent`,
+                                }
+                          }
                         >
                           {p}
                         </button>
@@ -379,7 +571,10 @@ function OnboardingPage() {
                   c={c}
                 />
                 <div>
-                  <label className="text-sm font-medium mb-2 block" style={{ color: c.textPrimary }}>
+                  <label
+                    className="text-sm font-medium mb-2 block"
+                    style={{ color: c.textPrimary }}
+                  >
                     Anything else we should know?
                   </label>
                   <textarea
@@ -393,8 +588,8 @@ function OnboardingPage() {
                       border: `1px solid ${c.inputBorder}`,
                       color: c.textPrimary,
                     }}
-                    onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-                    onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
                   />
                 </div>
               </motion.div>
@@ -413,7 +608,10 @@ function OnboardingPage() {
                   animate={{ scale: [1, 1.15, 1] }}
                   transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <div className="w-12 h-12 rounded-full" style={{ background: c.sunGlare, boxShadow: `0 0 24px ${c.sunGlareBg}` }} />
+                  <div
+                    className="w-12 h-12 rounded-full"
+                    style={{ background: c.sunGlare, boxShadow: `0 0 24px ${c.sunGlareBg}` }}
+                  />
                 </motion.div>
                 <AnimatePresence mode="wait">
                   <motion.p
@@ -436,10 +634,15 @@ function OnboardingPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <h1 className="text-3xl sm:text-4xl font-semibold mb-2" style={{ color: c.textPrimary }}>
+                <h1
+                  className="text-3xl sm:text-4xl font-semibold mb-2"
+                  style={{ color: c.textPrimary }}
+                >
                   Here's what we think you'll love
                 </h1>
-                <p className="mb-8" style={{ color: c.textSecondary }}>Three sports tuned to your answers.</p>
+                <p className="mb-8" style={{ color: c.textSecondary }}>
+                  Three sports tuned to your answers.
+                </p>
                 <div className="space-y-3 mb-8">
                   {sportRecommendations.map((sport) => (
                     <SportRecCard
@@ -454,7 +657,9 @@ function OnboardingPage() {
                   ))}
                 </div>
                 <div className="mb-6">
-                  <h3 className="font-semibold mb-3" style={{ color: c.textPrimary }}>Your 4-week starter plan</h3>
+                  <h3 className="font-semibold mb-3" style={{ color: c.textPrimary }}>
+                    Your 4-week starter plan
+                  </h3>
                   <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
                     {[1, 2, 3, 4].map((w) => (
                       <div
@@ -462,10 +667,16 @@ function OnboardingPage() {
                         className="card-frosted shrink-0 w-44 p-4"
                         style={{ borderColor: c.divider }}
                       >
-                        <div className="text-xs uppercase tracking-wider mb-1" style={{ color: c.textTertiary }}>
+                        <div
+                          className="text-xs uppercase tracking-wider mb-1"
+                          style={{ color: c.textTertiary }}
+                        >
                           Week {w}
                         </div>
-                        <div className="font-semibold text-sm mb-2" style={{ color: c.textPrimary }}>
+                        <div
+                          className="font-semibold text-sm mb-2"
+                          style={{ color: c.textPrimary }}
+                        >
                           {["Foundation", "Form & flow", "Build endurance", "Test yourself"][w - 1]}
                         </div>
                         <div className="text-xs" style={{ color: c.textSecondary }}>
@@ -486,8 +697,8 @@ function OnboardingPage() {
                   onClick={() => navigate({ to: "/dashboard" }).then(() => finishOnboarding())}
                   className="text-sm underline underline-offset-4 block mx-auto transition-colors"
                   style={{ color: c.textSecondary }}
-                  onMouseEnter={e => e.currentTarget.style.color = c.textPrimary}
-                  onMouseLeave={e => e.currentTarget.style.color = c.textSecondary}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = c.textPrimary)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = c.textSecondary)}
                 >
                   I'll decide later
                 </button>
@@ -500,7 +711,10 @@ function OnboardingPage() {
       {!loading && !showResult && (
         <div
           className="sticky bottom-0 backdrop-blur-xl px-5 py-4"
-          style={{ background: c.isDark ? "rgba(24,24,22,0.85)" : "rgba(244,243,238,0.85)", borderTop: `1px solid ${c.divider}` }}
+          style={{
+            background: c.isDark ? "rgba(24,24,22,0.85)" : "rgba(244,243,238,0.85)",
+            borderTop: `1px solid ${c.divider}`,
+          }}
         >
           <div className="max-w-[480px] mx-auto">
             <button
@@ -511,8 +725,17 @@ function OnboardingPage() {
               )}
               style={
                 canContinue
-                  ? { background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 28px ${c.sunGlareBg}` }
-                  : { background: c.chipBg, color: c.textDisabled, cursor: "not-allowed", border: `1px solid ${c.chipBorder}` }
+                  ? {
+                      background: c.sunGlare,
+                      color: "#1C1C1A",
+                      boxShadow: `0 0 28px ${c.sunGlareBg}`,
+                    }
+                  : {
+                      background: c.chipBg,
+                      color: c.textDisabled,
+                      cursor: "not-allowed",
+                      border: `1px solid ${c.chipBorder}`,
+                    }
               }
             >
               {step === 3 ? "Find my sports" : "Continue"} <ChevronRight size={16} />
@@ -548,7 +771,9 @@ function Pills({
 }) {
   return (
     <div>
-      <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>{label}</div>
+      <div className="text-sm font-medium mb-3" style={{ color: c.textPrimary }}>
+        {label}
+      </div>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => {
           const active = value === o;
@@ -557,12 +782,21 @@ function Pills({
               key={o}
               onClick={() => onChange(o)}
               className={cn(
-            "px-4 py-2 rounded-full border text-sm font-semibold transition-all active:scale-95",
-          )}
+                "px-4 py-2 rounded-full border text-sm font-semibold transition-all active:scale-95",
+              )}
               style={
                 active
-                  ? { background: c.sunGlare, color: "#1C1C1A", border: "1px solid transparent", boxShadow: `0 0 12px ${c.sunGlareBg}` }
-                  : { background: c.chipBg, border: `1px solid ${c.chipBorder}`, color: c.textSecondary }
+                  ? {
+                      background: c.sunGlare,
+                      color: "#1C1C1A",
+                      border: "1px solid transparent",
+                      boxShadow: `0 0 12px ${c.sunGlareBg}`,
+                    }
+                  : {
+                      background: c.chipBg,
+                      border: `1px solid ${c.chipBorder}`,
+                      color: c.textSecondary,
+                    }
               }
             >
               {o}
@@ -591,14 +825,22 @@ function SportRecCard({
           <div className="flex items-center gap-2 mb-1">
             <span
               className="w-9 h-9 rounded-full text-[11px] font-black grid place-items-center"
-              style={{ background: c.sunGlareBg, color: c.sunGlare, border: `1px solid ${c.sunGlare}33` }}
+              style={{
+                background: c.sunGlareBg,
+                color: c.sunGlare,
+                border: `1px solid ${c.sunGlare}33`,
+              }}
               aria-hidden
             >
               {getInitials(sport.name)}
             </span>
-            <h3 className="text-[24px] font-black" style={{ color: c.textPrimary }}>{sport.name}</h3>
+            <h3 className="text-[24px] font-black" style={{ color: c.textPrimary }}>
+              {sport.name}
+            </h3>
           </div>
-          <p className="text-sm italic" style={{ color: c.textSecondary }}>{sport.reason}</p>
+          <p className="text-sm italic" style={{ color: c.textSecondary }}>
+            {sport.reason}
+          </p>
         </div>
         <span
           className="text-[10px] font-semibold px-2 py-1 rounded-full uppercase tracking-wider"
@@ -611,8 +853,8 @@ function SportRecCard({
         onClick={() => setOpen((o) => !o)}
         className="text-xs flex items-center gap-1 mt-2 transition-colors"
         style={{ color: c.textSecondary }}
-        onMouseEnter={e => e.currentTarget.style.color = c.textPrimary}
-        onMouseLeave={e => e.currentTarget.style.color = c.textSecondary}
+        onMouseEnter={(e) => (e.currentTarget.style.color = c.textPrimary)}
+        onMouseLeave={(e) => (e.currentTarget.style.color = c.textSecondary)}
       >
         Why this?{" "}
         <ChevronDown size={12} className={cn("transition-transform", open && "rotate-180")} />
@@ -676,7 +918,13 @@ const conditionMeta: Record<
 };
 const severities = ["mild", "moderate", "significant"] as const;
 
-function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnType<typeof useColors> }) {
+function ConditionDetailCards({
+  selected,
+  c,
+}: {
+  selected: string[];
+  c: ReturnType<typeof useColors>;
+}) {
   const details = useApp((s) => s.onboarding.physicalDetails);
   const set = useApp((s) => s.setPhysicalDetail);
   const conds = selected.filter((cond) => cond !== "None" && cond !== "Prefer not to say");
@@ -697,16 +945,24 @@ function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnTy
             const d = details[condName] ?? {};
             const selectedSubs = (d.details?.values as string[]) ?? [];
             return (
-              <div key={condName} className="card-frosted p-4 mb-3" style={{ borderColor: c.divider }}>
+              <div
+                key={condName}
+                className="card-frosted p-4 mb-3"
+                style={{ borderColor: c.divider }}
+              >
                 <div className="flex items-center gap-2 mb-3">
                   <span style={{ color: c.textSecondary }}>
                     <Icon size={16} />
                   </span>
-                  <span className="text-sm font-medium" style={{ color: c.textPrimary }}>{condName}</span>
+                  <span className="text-sm font-medium" style={{ color: c.textPrimary }}>
+                    {condName}
+                  </span>
                 </div>
                 {meta.subLabel && (
                   <div className="mb-3">
-                    <div className="text-xs mb-2" style={{ color: c.textSecondary }}>{meta.subLabel}</div>
+                    <div className="text-xs mb-2" style={{ color: c.textSecondary }}>
+                      {meta.subLabel}
+                    </div>
                     {meta.subOptions ? (
                       <div className="flex gap-2 flex-wrap">
                         {meta.subOptions.map((o) => {
@@ -725,8 +981,16 @@ function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnTy
                               )}
                               style={
                                 active
-                                  ? { background: c.sunGlare, color: "#1C1C1A", border: "1px solid transparent" }
-                                  : { background: c.chipBg, border: `1px solid ${c.chipBorder}`, color: c.textSecondary }
+                                  ? {
+                                      background: c.sunGlare,
+                                      color: "#1C1C1A",
+                                      border: "1px solid transparent",
+                                    }
+                                  : {
+                                      background: c.chipBg,
+                                      border: `1px solid ${c.chipBorder}`,
+                                      color: c.textSecondary,
+                                    }
                               }
                             >
                               {o}
@@ -740,16 +1004,22 @@ function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnTy
                         value={(d.details?.text as string) ?? ""}
                         onChange={(e) => set(condName, { details: { text: e.target.value } })}
                         className="w-full h-10 border border-transparent rounded-lg px-3 text-sm focus:outline-none transition-colors"
-                        style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
+                        style={{
+                          background: c.inputBg,
+                          color: c.textPrimary,
+                          border: `1px solid ${c.inputBorder}`,
+                        }}
                         placeholder="e.g. right knee, ACL recovery"
-                        onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-                        onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                        onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
                       />
                     )}
                   </div>
                 )}
                 <div className="mb-3">
-                  <div className="text-xs mb-2" style={{ color: c.textSecondary }}>Severity</div>
+                  <div className="text-xs mb-2" style={{ color: c.textSecondary }}>
+                    Severity
+                  </div>
                   <div className="flex gap-2">
                     {severities.map((s) => {
                       const active = d.severity === s;
@@ -762,8 +1032,16 @@ function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnTy
                           )}
                           style={
                             active
-                              ? { background: c.textPrimary, color: c.appBg, border: "1px solid transparent" }
-                              : { background: c.chipBg, color: c.textPrimary, border: `1px solid transparent` }
+                              ? {
+                                  background: c.textPrimary,
+                                  color: c.appBg,
+                                  border: "1px solid transparent",
+                                }
+                              : {
+                                  background: c.chipBg,
+                                  color: c.textPrimary,
+                                  border: `1px solid transparent`,
+                                }
                           }
                         >
                           {s}
@@ -778,9 +1056,13 @@ function ConditionDetailCards({ selected, c }: { selected: string[]; c: ReturnTy
                   rows={2}
                   placeholder={meta.placeholder}
                   className="w-full rounded-lg px-3 py-2 text-sm resize-none min-h-[72px] focus:outline-none transition-colors"
-                  style={{ background: c.inputBg, color: c.textPrimary, border: `1px solid ${c.inputBorder}` }}
-                  onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-                  onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+                  style={{
+                    background: c.inputBg,
+                    color: c.textPrimary,
+                    border: `1px solid ${c.inputBorder}`,
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
                 />
               </div>
             );

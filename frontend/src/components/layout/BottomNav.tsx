@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 
 const items = [
-  { to: "/dashboard", label: "Home",      icon: House,                              },
-  { to: "/coach",     label: "Coach",     icon: Dumbbell, dot: "checkin" as const   },
-  { to: "/analysis",  label: "Analysis",  icon: Video,                              },
-  { to: "/community", label: "Community", icon: Users,    dot: "events"  as const   },
-  { to: "/profile",   label: "Profile",   icon: User,                               },
+  { to: "/dashboard", label: "Home", icon: House },
+  { to: "/coach", label: "Coach", icon: Dumbbell, dot: "checkin" as const },
+  { to: "/analysis", label: "Analysis", icon: Video },
+  { to: "/community", label: "Community", icon: Users, dot: "events" as const },
+  { to: "/profile", label: "Profile", icon: User },
 ];
 
 export function BottomNav() {
@@ -19,7 +19,7 @@ export function BottomNav() {
 
   if (
     location.pathname.startsWith("/coach/workout") ||
-    location.pathname.startsWith("/coach/chat")    ||
+    location.pathname.startsWith("/coach/chat") ||
     location.pathname.startsWith("/onboarding")
   )
     return null;
@@ -31,8 +31,7 @@ export function BottomNav() {
           const active =
             location.pathname === item.to || location.pathname.startsWith(item.to + "/");
           const Icon = item.icon;
-          const showDot =
-            (item.dot === "checkin" && !checkinDone) || item.dot === "events";
+          const showDot = (item.dot === "checkin" && !checkinDone) || item.dot === "events";
 
           if (active) {
             return (
@@ -44,7 +43,7 @@ export function BottomNav() {
               >
                 <Icon className="size-4 shrink-0" strokeWidth={2.5} />
                 <span className="hidden xs:inline">{item.label}</span>
-                <span className="inline xs:hidden">{item.label.slice(0,3)}</span>
+                <span className="inline xs:hidden">{item.label.slice(0, 3)}</span>
               </Link>
             );
           }

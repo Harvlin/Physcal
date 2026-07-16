@@ -7,17 +7,49 @@ import type { Exercise } from "@/lib/mock-data";
 
 // Indonesian number words for voice recognition
 const ID_NUMBERS: Record<string, number> = {
-  satu: 1, dua: 2, tiga: 3, empat: 4, lima: 5,
-  enam: 6, tujuh: 7, delapan: 8, sembilan: 9, sepuluh: 10,
-  sebelas: 11, "dua belas": 12, "tiga belas": 13, "empat belas": 14, "lima belas": 15,
-  "enam belas": 16, "tujuh belas": 17, "delapan belas": 18, "sembilan belas": 19, "dua puluh": 20,
+  satu: 1,
+  dua: 2,
+  tiga: 3,
+  empat: 4,
+  lima: 5,
+  enam: 6,
+  tujuh: 7,
+  delapan: 8,
+  sembilan: 9,
+  sepuluh: 10,
+  sebelas: 11,
+  "dua belas": 12,
+  "tiga belas": 13,
+  "empat belas": 14,
+  "lima belas": 15,
+  "enam belas": 16,
+  "tujuh belas": 17,
+  "delapan belas": 18,
+  "sembilan belas": 19,
+  "dua puluh": 20,
 };
 
 const EN_NUMBERS: Record<string, number> = {
-  one: 1, two: 2, three: 3, four: 4, five: 5,
-  six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
-  eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
-  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
 };
 
 type RepCounterProps = {
@@ -40,7 +72,8 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
   useEffect(() => {
     // Camera mode is a stub — not available
     // Try voice
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       // Voice not available, fall back to manual
       setRepCounterMode("manual");
@@ -61,7 +94,8 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setRepCounterMode("manual");
       return;
@@ -101,7 +135,11 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
     recognition.onend = () => {
       // Restart if still in voice mode
       if (useApp.getState().workoutSession.repCounterMode === "voice") {
-        try { recognition.start(); } catch { /* already started */ }
+        try {
+          recognition.start();
+        } catch {
+          /* already started */
+        }
       }
     };
 
@@ -114,7 +152,11 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
     }
 
     return () => {
-      try { recognition.stop(); } catch { /* ignore */ }
+      try {
+        recognition.stop();
+      } catch {
+        /* ignore */
+      }
       recognitionRef.current = null;
     };
   }, [repCounterMode]);
@@ -174,7 +216,10 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div>
-            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: c.textTertiary }}>
+            <div
+              className="text-xs uppercase tracking-widest font-bold"
+              style={{ color: c.textTertiary }}
+            >
               Count reps
             </div>
             <div className="text-lg font-extrabold" style={{ color: c.textPrimary }}>
@@ -261,9 +306,12 @@ export function RepCounter({ exercise, targetReps, onComplete, onClose }: RepCou
 
           {/* Voice instructions */}
           {repCounterMode === "voice" && (
-            <p className="text-sm text-center font-medium max-w-xs mb-6" style={{ color: c.textTertiary }}>
-              Say the rep number or{" "}
-              <span style={{ color: c.sunGlare }}>&ldquo;selesai&rdquo;</span> when done
+            <p
+              className="text-sm text-center font-medium max-w-xs mb-6"
+              style={{ color: c.textTertiary }}
+            >
+              Say the rep number or <span style={{ color: c.sunGlare }}>&ldquo;selesai&rdquo;</span>{" "}
+              when done
             </p>
           )}
 

@@ -43,7 +43,9 @@ function CreateEvent() {
   const [tags, setTags] = useState<string[]>([]);
   const [desc, setDesc] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [safetyLevel, setSafetyLevel] = useState<"beginner_friendly" | "general_fitness" | "advanced">("general_fitness");
+  const [safetyLevel, setSafetyLevel] = useState<
+    "beginner_friendly" | "general_fitness" | "advanced"
+  >("general_fitness");
   const [instructorPresent, setInstructorPresent] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const navigate = useNavigate();
@@ -90,8 +92,8 @@ function CreateEvent() {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Saturday Morning Run"
               style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+              onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
             />
           </Field>
           <Field label="Sport" c={c}>
@@ -99,10 +101,14 @@ function CreateEvent() {
               value={sport}
               onChange={(e) => setSport(e.target.value)}
               style={{ ...inputStyle, appearance: "none" }}
-              onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+              onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
             >
-              {sports.map((s) => <option key={s} style={{ background: c.appBg }}>{s}</option>)}
+              {sports.map((s) => (
+                <option key={s} style={{ background: c.appBg }}>
+                  {s}
+                </option>
+              ))}
             </select>
           </Field>
           <Field label="Date &amp; time" c={c}>
@@ -111,8 +117,8 @@ function CreateEvent() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               style={{ ...inputStyle, colorScheme: c.isDark ? "dark" : "light" }}
-              onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+              onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
             />
           </Field>
           <Field label="Location" c={c}>
@@ -121,8 +127,8 @@ function CreateEvent() {
               onChange={(e) => setLocation(e.target.value)}
               placeholder="GBK, Jakarta"
               style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+              onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+              onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
             />
           </Field>
           <Field label="Max participants" c={c}>
@@ -135,12 +141,15 @@ function CreateEvent() {
                   border: `1px solid ${c.chipBorder}`,
                   color: c.textSecondary,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = c.chipBg)}
+                onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = c.chipBg)}
               >
                 <Minus size={14} />
               </button>
-              <div className="flex-1 text-center text-[24px] font-black tabular" style={{ color: c.textPrimary }}>
+              <div
+                className="flex-1 text-center text-[24px] font-black tabular"
+                style={{ color: c.textPrimary }}
+              >
                 {cap}
               </div>
               <button
@@ -151,8 +160,8 @@ function CreateEvent() {
                   border: `1px solid ${c.chipBorder}`,
                   color: c.textSecondary,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = c.chipBg)}
+                onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = c.chipBg)}
               >
                 <Plus size={14} />
               </button>
@@ -211,8 +220,15 @@ function CreateEvent() {
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{opt.emoji}</span>
                     <div>
-                      <div className="font-bold text-[14px]" style={{ color: c.textPrimary }}>{opt.label}</div>
-                      <div className="text-[12px] font-medium mt-0.5" style={{ color: c.textTertiary }}>{opt.description}</div>
+                      <div className="font-bold text-[14px]" style={{ color: c.textPrimary }}>
+                        {opt.label}
+                      </div>
+                      <div
+                        className="text-[12px] font-medium mt-0.5"
+                        style={{ color: c.textTertiary }}
+                      >
+                        {opt.description}
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -268,16 +284,16 @@ function CreateEvent() {
             rows={5}
             placeholder="What can attendees expect?"
             style={{ ...inputStyle, resize: "none" }}
-            onFocus={e => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
-            onBlur={e => (e.currentTarget.style.borderColor = c.inputBorder)}
+            onFocus={(e) => (e.currentTarget.style.borderColor = `${c.sunGlare}66`)}
+            onBlur={(e) => (e.currentTarget.style.borderColor = c.inputBorder)}
           />
           <button
             onClick={generate}
             disabled={generating}
             className="mt-2 inline-flex items-center gap-2 text-sm font-bold transition-colors disabled:opacity-50"
             style={{ color: c.violet }}
-            onMouseEnter={e => (e.currentTarget.style.color = c.violetLight)}
-            onMouseLeave={e => (e.currentTarget.style.color = c.violet)}
+            onMouseEnter={(e) => (e.currentTarget.style.color = c.violetLight)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = c.violet)}
           >
             {generating ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
             {generating ? "Generating..." : "Generate with AI"}
@@ -299,8 +315,12 @@ function CreateEvent() {
             >
               {acknowledged && <Check size={12} style={{ color: "#1C1C1A" }} strokeWidth={3} />}
             </div>
-            <span className="text-[13px] font-medium leading-relaxed" style={{ color: c.textSecondary }}>
-              I understand that I am responsible for communicating the physical requirements and risks of this event to all participants.
+            <span
+              className="text-[13px] font-medium leading-relaxed"
+              style={{ color: c.textSecondary }}
+            >
+              I understand that I am responsible for communicating the physical requirements and
+              risks of this event to all participants.
             </span>
           </button>
 
@@ -308,7 +328,11 @@ function CreateEvent() {
             onClick={() => navigate({ to: "/community" })}
             disabled={!name || !date || !location || !acknowledged}
             className="w-full h-[52px] rounded-full font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-30"
-            style={{ background: c.sunGlare, color: "#1C1C1A", boxShadow: `0 0 24px ${c.sunGlareBg}` }}
+            style={{
+              background: c.sunGlare,
+              color: "#1C1C1A",
+              boxShadow: `0 0 24px ${c.sunGlareBg}`,
+            }}
           >
             Publish event
           </button>
@@ -324,7 +348,15 @@ function CreateEvent() {
   );
 }
 
-function Section({ label, children, c }: { label: string; children: React.ReactNode; c: ReturnType<typeof useColors> }) {
+function Section({
+  label,
+  children,
+  c,
+}: {
+  label: string;
+  children: React.ReactNode;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
     <div>
       <h2
@@ -338,7 +370,15 @@ function Section({ label, children, c }: { label: string; children: React.ReactN
   );
 }
 
-function Field({ label, children, c }: { label: string; children: React.ReactNode; c: ReturnType<typeof useColors> }) {
+function Field({
+  label,
+  children,
+  c,
+}: {
+  label: string;
+  children: React.ReactNode;
+  c: ReturnType<typeof useColors>;
+}) {
   return (
     <div>
       <label className="block text-sm font-semibold mb-1.5" style={{ color: c.textSecondary }}>

@@ -104,15 +104,11 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
           className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
           style={{
-            background: c.isDark
-              ? "oklch(0.32 0.072 175 / 0.92)"
-              : "oklch(0.55 0.06 175 / 0.92)",
+            background: c.isDark ? "oklch(0.32 0.072 175 / 0.92)" : "oklch(0.55 0.06 175 / 0.92)",
             backdropFilter: "blur(32px) saturate(150%)",
             WebkitBackdropFilter: "blur(32px) saturate(150%)",
           }}
         >
-
-
           {/* Header */}
           <div className="w-full max-w-sm flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
@@ -127,7 +123,10 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
           </div>
 
           {/* Ring + countdown */}
-          <div className="relative grid place-items-center mb-8" style={{ width: svgSize, height: svgSize }}>
+          <div
+            className="relative grid place-items-center mb-8"
+            style={{ width: svgSize, height: svgSize }}
+          >
             <svg
               className="-rotate-90 absolute inset-0"
               viewBox={`0 0 ${svgSize} ${svgSize}`}
@@ -178,11 +177,18 @@ export function RestTimerOverlay({ nextExercise, nextSetInfo }: RestTimerOverlay
                 {nextSetInfo || nextExercise?.name || "Finish"}
               </div>
               {nextExercise && !nextSetInfo && (
-                <div className="text-sm font-medium mt-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  {(!nextExercise.trackingMode || nextExercise.trackingMode === "rep") && `${nextExercise.sets} sets × ${nextExercise.reps} reps`}
-                  {nextExercise.trackingMode === "hold" && `${nextExercise.sets}× ${nextExercise.reps}s hold`}
-                  {nextExercise.trackingMode === "interval" && `${nextExercise.intervalRounds} rounds`}
-                  {nextExercise.trackingMode === "distance" && `~${nextExercise.targetDurationMinutes} min`}
+                <div
+                  className="text-sm font-medium mt-1"
+                  style={{ color: "rgba(255,255,255,0.6)" }}
+                >
+                  {(!nextExercise.trackingMode || nextExercise.trackingMode === "rep") &&
+                    `${nextExercise.sets} sets × ${nextExercise.reps} reps`}
+                  {nextExercise.trackingMode === "hold" &&
+                    `${nextExercise.sets}× ${nextExercise.reps}s hold`}
+                  {nextExercise.trackingMode === "interval" &&
+                    `${nextExercise.intervalRounds} rounds`}
+                  {nextExercise.trackingMode === "distance" &&
+                    `~${nextExercise.targetDurationMinutes} min`}
                 </div>
               )}
             </div>

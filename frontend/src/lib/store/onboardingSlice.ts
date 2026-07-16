@@ -12,7 +12,9 @@ const defaultOnboarding = {
   weeklySessionTarget: 3,
 };
 
-export const createOnboardingSlice: StateCreator<AppState, [], [], OnboardingSliceType> = (set) => ({
+export const createOnboardingSlice: StateCreator<AppState, [], [], OnboardingSliceType> = (
+  set,
+) => ({
   onboarding: { ...defaultOnboarding },
   setOnboarding: (patch) => set((s) => ({ onboarding: { ...s.onboarding, ...patch } })),
   setPhysicalDetail: (cond, patch) =>

@@ -45,7 +45,9 @@ function SignupPage() {
   return (
     <AuthShell>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-black" style={{ color: c.textPrimary }}>Create your account</h1>
+        <h1 className="text-2xl font-black" style={{ color: c.textPrimary }}>
+          Create your account
+        </h1>
         <p className="text-sm mt-1.5 font-medium" style={{ color: c.textTertiary }}>
           Start your inclusive sports journey in 60 seconds.
         </p>
@@ -106,7 +108,10 @@ function SignupPage() {
                     />
                   ))}
                 </div>
-                <span className="text-[11px] w-12 text-right font-semibold" style={{ color: s > 0 ? strengthColors[s] : c.textTertiary }}>
+                <span
+                  className="text-[11px] w-12 text-right font-semibold"
+                  style={{ color: s > 0 ? strengthColors[s] : c.textTertiary }}
+                >
                   {labels[s]}
                 </span>
               </div>

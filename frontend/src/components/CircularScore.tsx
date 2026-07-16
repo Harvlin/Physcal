@@ -62,10 +62,7 @@ export function CircularScore({
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="text-center">
-          <div
-            className="tabular font-black"
-            style={{ fontSize: "40px", color: strokeColor }}
-          >
+          <div className="tabular font-black" style={{ fontSize: "40px", color: strokeColor }}>
             {animated}
           </div>
           {label && (

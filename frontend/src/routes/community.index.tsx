@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EventCard } from "@/components/EventCard";
 import { EmptyState, CrowdIllustration } from "@/components/EmptyState";
 import { events } from "@/lib/mock-data";
+import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 
@@ -18,7 +19,9 @@ const filters = ["All", "Beginner-friendly", "Women only", "Free", "Adaptive acc
 function CommunityPage() {
   const [filter, setFilter] = useState("All");
   const [q, setQ] = useState("");
+  const profile = useApp((s) => s.trainingProfile);
   const c = useColors();
+
   const filtered = events.filter((e) => {
     const matchQ =
       !q ||
@@ -30,15 +33,36 @@ function CommunityPage() {
     return matchQ && matchF;
   });
 
+  // Social preference sorting (Part F).
+  // The "social" goal provides an additional +1 boost beyond the base preference match,
+  // so users who explicitly listed socializing as a goal see community events rise even higher.
+  const hasSocialGoal = profile?.goals?.includes("social") ?? false;
+  const sorted = [...filtered].sort((a, b) => {
+    if (!profile) return 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const aMatch = a.socialFit?.includes(profile.socialPreference as any) ? 1 : 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bMatch = b.socialFit?.includes(profile.socialPreference as any) ? 1 : 0;
+    // Apply the "social" goal boost: adds +1 on top of the base match score
+    const aScore = aMatch + (hasSocialGoal && aMatch ? 1 : 0);
+    const bScore = bMatch + (hasSocialGoal && bMatch ? 1 : 0);
+    return bScore - aScore;
+  });
+
   return (
     <AppShell>
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] mb-2" style={{ color: c.violet }}>
+            <p
+              className="text-xs font-bold uppercase tracking-[0.18em] mb-2"
+              style={{ color: c.violet }}
+            >
               Discover
             </p>
-            <h1 className="text-[26px] font-black" style={{ color: c.textPrimary }}>Community</h1>
+            <h1 className="text-[26px] font-black" style={{ color: c.textPrimary }}>
+              Community
+            </h1>
           </div>
           <Link
             to="/community/create"
@@ -77,11 +101,11 @@ function CommunityPage() {
               height: "48px",
               color: c.textPrimary,
             }}
-            onFocus={e => {
+            onFocus={(e) => {
               e.currentTarget.style.borderColor = c.violet;
               e.currentTarget.style.boxShadow = `0 0 0 3px ${c.violetBg}`;
             }}
-            onBlur={e => {
+            onBlur={(e) => {
               e.currentTarget.style.borderColor = c.inputBorder;
               e.currentTarget.style.boxShadow = "none";
             }}
@@ -116,7 +140,7 @@ function CommunityPage() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {sorted.length === 0 ? (
           <EmptyState
             icon={<CrowdIllustration />}
             title="No events match"
@@ -125,7 +149,11 @@ function CommunityPage() {
               <Link
                 to="/community/create"
                 className="font-bold h-10 px-5 rounded-full text-sm flex items-center hover:opacity-90 transition-all"
-                style={{ background: c.exuberant, color: "#F2F0E9", boxShadow: `0 0 16px ${c.exuberantBg}` }}
+                style={{
+                  background: c.exuberant,
+                  color: "#F2F0E9",
+                  boxShadow: `0 0 16px ${c.exuberantBg}`,
+                }}
               >
                 Create event
               </Link>
@@ -133,7 +161,7 @@ function CommunityPage() {
           />
         ) : (
           <div className="space-y-3">
-            {filtered.map((e) => (
+            {sorted.map((e) => (
               <EventCard key={e.id} event={e} />
             ))}
           </div>

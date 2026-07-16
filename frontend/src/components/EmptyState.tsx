@@ -16,7 +16,9 @@ export function EmptyState({
   return (
     <div className="text-center py-16 px-6">
       {icon && <div className="mx-auto mb-5">{icon}</div>}
-      <h3 className="font-bold text-base" style={{ color: c.textPrimary }}>{title}</h3>
+      <h3 className="font-bold text-base" style={{ color: c.textPrimary }}>
+        {title}
+      </h3>
       {description && (
         <p className="text-sm mt-1.5 max-w-sm mx-auto" style={{ color: c.textTertiary }}>
           {description}

@@ -1,15 +1,47 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { activeNudge } from "@/lib/mock-data";
+import {
+  activeNudge,
+  weekOverview,
+  currentUser,
+  shouldShowStreakNudge,
+  shouldShowMilestoneNudge,
+} from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
+import { calculateStreak } from "@/lib/utils";
 
 export function NudgeBanner() {
   const dismissed = useApp((s) => s.nudgeDismissed);
   const enabled = useApp((s) => s.smartReminders);
   const dismiss = useApp((s) => s.dismissNudge);
+  const checkinDoneToday = useApp((s) => s.checkinDoneToday);
   const c = useColors();
+
+  // Determine which nudge to show
+  let displayNudge = activeNudge;
+  const currentStreak = calculateStreak(weekOverview);
+
+  if (shouldShowMilestoneNudge(currentUser.joinedAt)) {
+    displayNudge = {
+      id: "n_milestone",
+      headline: "You hit a milestone!",
+      message: "Check your profile to see your new badge and progress.",
+      cta: "View profile",
+      ctaLink: "/profile",
+      ts: "Just now",
+    };
+  } else if (shouldShowStreakNudge(currentStreak, checkinDoneToday)) {
+    displayNudge = {
+      id: "n_streak",
+      headline: "Keep your streak alive",
+      message: `You're on a ${currentStreak}-day streak. One check-in keeps it alive.`,
+      cta: "Check in now",
+      ctaLink: "/coach",
+      ts: "Just now",
+    };
+  }
 
   return (
     <AnimatePresence>
@@ -30,17 +62,17 @@ export function NudgeBanner() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm" style={{ color: c.textPrimary }}>
-              {activeNudge.headline}
+              {displayNudge.headline}
             </div>
             <div className="text-[13px] mt-0.5" style={{ color: c.textSecondary }}>
-              {activeNudge.message}
+              {displayNudge.message}
             </div>
             <Link
-              to={activeNudge.ctaLink}
+              to={displayNudge.ctaLink}
               className="inline-flex items-center gap-1 mt-3 text-[13px] font-bold transition-all"
               style={{ color: c.sunGlare }}
             >
-              {activeNudge.cta} →
+              {displayNudge.cta} →
             </Link>
           </div>
           <button
@@ -48,8 +80,8 @@ export function NudgeBanner() {
             aria-label="Dismiss"
             className="w-7 h-7 grid place-items-center rounded-lg transition-colors shrink-0 -mt-0.5 -mr-0.5"
             style={{ color: c.textTertiary }}
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <X size={14} />
           </button>

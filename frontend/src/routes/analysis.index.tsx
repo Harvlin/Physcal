@@ -62,7 +62,10 @@ function AnalysisPage() {
     <AppShell>
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-3xl mx-auto">
         <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] mb-2" style={{ color: c.violet }}>
+          <p
+            className="text-xs font-bold uppercase tracking-[0.18em] mb-2"
+            style={{ color: c.violet }}
+          >
             AI-powered
           </p>
           <h1 className="text-[26px] font-black leading-tight" style={{ color: c.textPrimary }}>
@@ -76,7 +79,9 @@ function AnalysisPage() {
         {/* Pick a movement */}
         <div className="card-frosted mb-5 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold" style={{ color: c.textPrimary }}>Pick a movement</h2>
+            <h2 className="text-sm font-bold" style={{ color: c.textPrimary }}>
+              Pick a movement
+            </h2>
             <span
               className="text-[10px] uppercase tracking-widest font-semibold"
               style={{ color: c.textTertiary }}
@@ -110,7 +115,9 @@ function AnalysisPage() {
                       >
                         {getInitials(ex.label)}
                       </span>
-                      <div className="font-bold text-[14px]" style={{ color: c.textPrimary }}>{ex.label}</div>
+                      <div className="font-bold text-[14px]" style={{ color: c.textPrimary }}>
+                        {ex.label}
+                      </div>
                     </div>
                     <span
                       className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full transition-colors"
@@ -146,10 +153,15 @@ function AnalysisPage() {
                   opacity: 0.4,
                 }}
               >
-                <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: c.textSecondary }}>
+                <div
+                  className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-wider"
+                  style={{ color: c.textSecondary }}
+                >
                   <Lock size={11} /> Soon
                 </div>
-                <div className="font-bold text-[13px]" style={{ color: c.textPrimary }}>{ex.label}</div>
+                <div className="font-bold text-[13px]" style={{ color: c.textPrimary }}>
+                  {ex.label}
+                </div>
               </div>
             ))}
           </div>
@@ -157,7 +169,9 @@ function AnalysisPage() {
 
         {/* Upload video */}
         <div className="card-frosted mb-4 p-5">
-          <h2 className="text-sm font-bold mb-3" style={{ color: c.textPrimary }}>Upload video</h2>
+          <h2 className="text-sm font-bold mb-3" style={{ color: c.textPrimary }}>
+            Upload video
+          </h2>
           <input
             ref={inputRef}
             type="file"
@@ -193,7 +207,10 @@ function AnalysisPage() {
                 >
                   <Play size={18} fill="currentColor" />
                 </div>
-                <div className="font-semibold text-sm truncate max-w-xs" style={{ color: c.textPrimary }}>
+                <div
+                  className="font-semibold text-sm truncate max-w-xs"
+                  style={{ color: c.textPrimary }}
+                >
                   {file.name}
                 </div>
                 <div className="text-xs mt-1" style={{ color: c.textTertiary }}>
@@ -202,11 +219,7 @@ function AnalysisPage() {
               </div>
             ) : (
               <div>
-                <UploadCloud
-                  className="mx-auto mb-3"
-                  size={36}
-                  style={{ color: c.textDisabled }}
-                />
+                <UploadCloud className="mx-auto mb-3" size={36} style={{ color: c.textDisabled }} />
                 <div className="font-semibold" style={{ color: c.textSecondary }}>
                   Tap to choose video
                 </div>
@@ -240,10 +253,12 @@ function AnalysisPage() {
           <button
             onClick={() => setTipsOpen((o) => !o)}
             className="w-full flex items-center justify-between p-4 transition-colors"
-            onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
-            <span className="font-bold text-sm" style={{ color: c.textPrimary }}>Tips for best results</span>
+            <span className="font-bold text-sm" style={{ color: c.textPrimary }}>
+              Tips for best results
+            </span>
             <ChevronDown
               size={15}
               className={cn("transition-transform", tipsOpen && "rotate-180")}
@@ -253,7 +268,7 @@ function AnalysisPage() {
           <div
             className={cn(
               "overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
-              tipsOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0"
+              tipsOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0",
             )}
           >
             <div className="px-4 pb-4 space-y-3">
@@ -263,7 +278,10 @@ function AnalysisPage() {
                     className="w-5 h-5 rounded-full grid place-items-center shrink-0 mt-0.5"
                     style={{ background: c.exuberantBg }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.exuberant }} />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: c.exuberant }}
+                    />
                   </span>
                   <span style={{ color: c.textSecondary }}>{t}</span>
                 </div>
@@ -277,7 +295,7 @@ function AnalysisPage() {
           onClick={handleAnalyze}
           disabled={!canAnalyze}
           className={cn(
-            "w-full h-[52px] font-bold text-[15px] transition-all flex items-center justify-center gap-2 relative overflow-hidden"
+            "w-full h-[52px] font-bold text-[15px] transition-all flex items-center justify-center gap-2 relative overflow-hidden",
           )}
           style={{
             borderRadius: "9999px",
@@ -291,7 +309,11 @@ function AnalysisPage() {
             <>
               <div
                 className="absolute inset-0"
-                style={{ background: c.sunGlare, width: `${progress}%`, transition: "width 0.12s linear" }}
+                style={{
+                  background: c.sunGlare,
+                  width: `${progress}%`,
+                  transition: "width 0.12s linear",
+                }}
               />
               <span className="relative flex items-center gap-2" style={{ color: "#1C1C1A" }}>
                 <Loader2 className="animate-spin" size={14} /> Analyzing... {progress}%

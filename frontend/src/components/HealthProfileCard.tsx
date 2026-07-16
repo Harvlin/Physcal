@@ -31,12 +31,14 @@ export function HealthProfileCard() {
       <button
         onClick={() => setOpen(!open)}
         className="w-full px-5 py-4 flex items-center justify-between transition-colors"
-        onMouseEnter={e => (e.currentTarget.style.background = c.hoverBg)}
-        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         <div className="flex items-center gap-2.5">
           <HeartPulse size={16} style={{ color: c.violet }} />
-          <span className="text-sm font-bold" style={{ color: c.textPrimary }}>Health Profile</span>
+          <span className="text-sm font-bold" style={{ color: c.textPrimary }}>
+            Health Profile
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {count > 0 && (
@@ -77,7 +79,9 @@ export function HealthProfileCard() {
                       if (Array.isArray(v)) detailParts.push(v.join(", "));
                       else if (v) detailParts.push(String(v));
                     }
-                    detailParts.push(condition.severity.charAt(0).toUpperCase() + condition.severity.slice(1));
+                    detailParts.push(
+                      condition.severity.charAt(0).toUpperCase() + condition.severity.slice(1),
+                    );
                     return (
                       <div
                         key={i}
@@ -90,17 +94,24 @@ export function HealthProfileCard() {
                               <Icon size={16} />
                             </span>
                           ) : (
-                            <span className="mt-0.5" style={{ color: c.violet }}>•</span>
+                            <span className="mt-0.5" style={{ color: c.violet }}>
+                              •
+                            </span>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>{condition.type}</div>
+                            <div className="text-sm font-semibold" style={{ color: c.textPrimary }}>
+                              {condition.type}
+                            </div>
                             <div className="text-xs mt-0.5" style={{ color: c.textSecondary }}>
                               {detailParts.join(" · ")}
                             </div>
                             {condition.avoidances && (
                               <div
                                 className="rounded-xl px-3 py-2 text-xs mt-2 flex items-start gap-2"
-                                style={{ background: c.exuberantBg, border: `1px solid ${c.exuberant}22` }}
+                                style={{
+                                  background: c.exuberantBg,
+                                  border: `1px solid ${c.exuberant}22`,
+                                }}
                               >
                                 <AlertTriangle
                                   size={13}
@@ -126,8 +137,8 @@ export function HealthProfileCard() {
                   borderTop: `1px solid ${c.divider}`,
                   color: c.sunGlare,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = c.sunGlareBg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = c.sunGlareBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <span className="font-semibold">Update health profile</span>
                 <ChevronRight size={14} />

@@ -16,9 +16,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-stage min-h-dvh">
       <SideNav />
-      <main className="lg:pl-[280px] pb-24 lg:pb-0 min-h-dvh">
-        {children}
-      </main>
+      <main className="lg:pl-[280px] pb-24 lg:pb-0 min-h-dvh">{children}</main>
       <BottomNav />
     </div>
   );

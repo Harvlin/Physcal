@@ -18,7 +18,11 @@ type InjuryPauseSheetProps = {
   children: React.ReactNode; // trigger button
 };
 
-export function InjuryPauseSheet({ sessionId, onSwitchToRecovery, children }: InjuryPauseSheetProps) {
+export function InjuryPauseSheet({
+  sessionId,
+  onSwitchToRecovery,
+  children,
+}: InjuryPauseSheetProps) {
   const c = useColors();
   const navigate = useNavigate();
   const pauseForInjury = useApp((s) => s.pauseForInjury);
@@ -51,10 +55,7 @@ export function InjuryPauseSheet({ sessionId, onSwitchToRecovery, children }: In
         }}
       >
         <DrawerHeader className="text-center pt-6 pb-2">
-          <DrawerTitle
-            className="text-[22px] font-extrabold"
-            style={{ color: c.textPrimary }}
-          >
+          <DrawerTitle className="text-[22px] font-extrabold" style={{ color: c.textPrimary }}>
             Something&apos;s not right?
           </DrawerTitle>
           <DrawerDescription
@@ -106,10 +107,7 @@ export function InjuryPauseSheet({ sessionId, onSwitchToRecovery, children }: In
           </DrawerClose>
         </div>
 
-        <p
-          className="text-xs text-center font-medium mt-6 px-8"
-          style={{ color: c.textTertiary }}
-        >
+        <p className="text-xs text-center font-medium mt-6 px-8" style={{ color: c.textTertiary }}>
           Your sets so far are logged. Take care of your body first.
         </p>
       </DrawerContent>
