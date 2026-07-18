@@ -17,7 +17,7 @@ import {
   Scale,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { sportRecommendations } from "@/lib/mock-data";
+import { sportRecommendations, generateDailyPlan, GoalId } from "@/lib/mock-data";
 import { cn, getInitials } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 
@@ -661,36 +661,50 @@ function OnboardingPage() {
                     Your 4-week starter plan
                   </h3>
                   <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-5 px-5 pb-2">
-                    {[1, 2, 3, 4].map((w) => (
-                      <div
-                        key={w}
-                        className="card-frosted shrink-0 w-44 p-4"
-                        style={{ borderColor: c.divider }}
-                      >
+                    {[1, 2, 3, 4].map((w) => {
+                      const sportId = onboarding.pickedSportId || sportRecommendations[0].id;
+                      const plan = generateDailyPlan(
+                        false,
+                        sportId,
+                        [],
+                        onboarding.goals as GoalId[],
+                        { hasConditions: false },
+                        onboarding.fitnessLevel,
+                        undefined,
+                        undefined,
+                        undefined,
+                        w,
+                      ).workout;
+                      const targetSessions = onboarding.weeklySessionTarget || 3;
+
+                      return (
                         <div
-                          className="text-xs uppercase tracking-wider mb-1"
-                          style={{ color: c.textTertiary }}
+                          key={w}
+                          className="card-frosted shrink-0 w-44 p-4"
+                          style={{ borderColor: c.divider }}
                         >
-                          Week {w}
+                          <div
+                            className="text-xs uppercase tracking-wider mb-1"
+                            style={{ color: c.textTertiary }}
+                          >
+                            Week {w}
+                          </div>
+                          <div
+                            className="font-semibold text-sm mb-2"
+                            style={{ color: c.textPrimary }}
+                          >
+                            {
+                              ["Foundation", "Form & flow", "Build endurance", "Test yourself"][
+                                w - 1
+                              ]
+                            }
+                          </div>
+                          <div className="text-xs" style={{ color: c.textSecondary }}>
+                            {targetSessions} sessions · {plan.difficulty}
+                          </div>
                         </div>
-                        <div
-                          className="font-semibold text-sm mb-2"
-                          style={{ color: c.textPrimary }}
-                        >
-                          {["Foundation", "Form & flow", "Build endurance", "Test yourself"][w - 1]}
-                        </div>
-                        <div className="text-xs" style={{ color: c.textSecondary }}>
-                          {
-                            [
-                              "3 sessions · light",
-                              "3 sessions · moderate",
-                              "4 sessions · moderate",
-                              "3 sessions · push",
-                            ][w - 1]
-                          }
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
                 <button

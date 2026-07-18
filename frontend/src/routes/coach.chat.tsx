@@ -7,6 +7,8 @@ import { ChatBubble } from "@/components/ChatBubble";
 import { chatHistory, suggestedPrompts, type ChatMessage, type ChatAction } from "@/lib/mock-data";
 import { useColors } from "@/hooks/useColors";
 import { toast } from "sonner";
+import { checkAndUnlockBadges } from "@/lib/progress";
+import { weekOverview } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/coach/chat")({
   head: () => ({ meta: [{ title: "Coach Chat — Physcal" }] }),
@@ -97,6 +99,17 @@ function ChatPage() {
     } else {
       applyChatAction(action);
       setAppliedActions((s) => new Set(s).add(msgId));
+
+      checkAndUnlockBadges("chat_interaction", {
+        totalSessions: 0,
+        days: weekOverview,
+        recoveryDates: [],
+        joinedAt: "2025-04-12",
+        today: new Date(),
+        eventsCreatedCount: 0,
+        chatActionAppliedCount: appliedActions.size + 1,
+      });
+
       toast.success(
         action.type === "adjust_volume"
           ? "Plan adjusted — volume reduced"

@@ -81,6 +81,7 @@ export type WorkoutSessionState = {
     setLog: Record<string, SetLogEntry[]>;
     usedWeights: Record<string, number>;
   } | null;
+  recoveryCompletedAt: string | null;
 };
 
 // ─── Slice Types ───────────────────────────────────────────────
@@ -181,6 +182,7 @@ export type WorkoutSliceType = {
    * can display a "From your analysis" origin badge.
    */
   addDrillToPlan: (drill: { name: string; description: string }) => void;
+  markRecoveryComplete: () => void;
 };
 
 export type AppState = AppSliceType & OnboardingSliceType & WorkoutSliceType;

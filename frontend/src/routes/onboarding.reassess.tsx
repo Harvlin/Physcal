@@ -2,10 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { ChevronLeft, Sparkles } from "lucide-react";
-import { currentUser, sportRecommendations } from "@/lib/mock-data";
+import { currentUser, sportRecommendations, weekOverview, type DayStatus } from "@/lib/mock-data";
 import { getInitials } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 import { cn } from "@/lib/utils";
+
+import { evaluateReassessment } from "@/lib/progress";
+import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/onboarding/reassess")({
   component: Reassess,
@@ -15,6 +18,14 @@ function Reassess() {
   const [stage, setStage] = useState<"welcome" | "result">("welcome");
   const navigate = useNavigate();
   const c = useColors();
+  const trainingProfile = useApp((s) => s.trainingProfile);
+
+  const sessionHistory = weekOverview.map((d: { date: string; status: DayStatus }) => ({
+    date: d.date,
+    completed: d.status === "completed",
+    isRecovery: false,
+  }));
+  const result = evaluateReassessment(sessionHistory, trainingProfile?.fitnessLevel || "Beginner");
 
   if (stage === "welcome") {
     return (
@@ -120,9 +131,11 @@ function Reassess() {
         >
           <Sparkles size={12} /> Comparison ready
         </div>
-        <h1 className="text-3xl font-semibold mb-2">You've evolved</h1>
+        <h1 className="text-3xl font-semibold mb-2">
+          {result.levelChanged ? "You've evolved" : "Staying the course"}
+        </h1>
         <p className="mb-6" style={{ color: c.textSecondary }}>
-          Your taste hasn't changed — but your level has. We've leveled up your roadmap.
+          {result.reasoning}
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -146,16 +159,20 @@ function Reassess() {
             </div>
             <div className="font-semibold">Badminton</div>
             <div className="text-xs mt-1" style={{ color: c.textSecondary }}>
-              Beginner
+              {trainingProfile?.fitnessLevel || "Beginner"}
             </div>
           </div>
           <div
             className="rounded-2xl p-4"
-            style={{ background: c.sunGlareBg, borderColor: c.sunGlare, borderWidth: 1 }}
+            style={{
+              background: result.levelChanged ? c.sunGlareBg : c.chipBg,
+              borderColor: result.levelChanged ? c.sunGlare : c.chipBorder,
+              borderWidth: 1,
+            }}
           >
             <div
               className="text-[10px] uppercase tracking-widest mb-2"
-              style={{ color: c.sunGlare }}
+              style={{ color: result.levelChanged ? c.sunGlare : c.textSecondary }}
             >
               Now
             </div>
@@ -163,16 +180,19 @@ function Reassess() {
               className="w-9 h-9 rounded-full text-[11px] font-semibold grid place-items-center mb-2"
               style={{
                 background: c.chipBg,
-                borderColor: c.sunGlare,
+                borderColor: result.levelChanged ? c.sunGlare : c.chipBorder,
                 borderWidth: 1,
-                color: c.sunGlare,
+                color: result.levelChanged ? c.sunGlare : c.textSecondary,
               }}
             >
               {getInitials("Badminton")}
             </div>
             <div className="font-semibold">Badminton</div>
-            <div className="text-xs mt-1" style={{ color: c.sunGlare }}>
-              Intermediate
+            <div
+              className="text-xs mt-1"
+              style={{ color: result.levelChanged ? c.sunGlare : c.textSecondary }}
+            >
+              {result.newLevel}
             </div>
           </div>
         </div>

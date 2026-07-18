@@ -3,9 +3,11 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check, Heart, Clock, Dumbbell, Repeat, TrendingUp } from "lucide-react";
 import { todayWorkout, recoveryWorkout, exerciseLoadHistory } from "@/lib/mock-data";
+import { toast } from "sonner";
+import { checkAndUnlockBadges } from "@/lib/progress";
+import { weekOverview } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/coach/workout/$sessionId/done")({
   component: DonePage,
@@ -17,7 +19,32 @@ function DonePage() {
   const [note, setNote] = useState("");
   const session = useApp((s) => s.workoutSession);
   const resetWorkoutSession = useApp((s) => s.resetWorkoutSession);
+  const markRecoveryComplete = useApp((s) => s.markRecoveryComplete);
   const isInjury = session.injuryPaused;
+
+  useState(() => {
+    // Run once on mount (useState init function is a safe way in React 18 strict mode to avoid double-firing badges, or we can use useEffect with a ref)
+  });
+
+  // Since we want this to run exactly once when reaching the done screen:
+  const [processed, setProcessed] = useState(false);
+  if (!processed) {
+    if (isInjury) markRecoveryComplete();
+
+    // Defer badge check to avoid rendering during state update
+    setTimeout(() => {
+      checkAndUnlockBadges("session_complete", {
+        totalSessions: 1, // Mock
+        days: weekOverview,
+        recoveryDates: isInjury ? [new Date().toISOString().split("T")[0]] : [],
+        joinedAt: "2025-04-12",
+        today: new Date(),
+        eventsCreatedCount: 0,
+        chatActionAppliedCount: 0,
+      });
+    }, 100);
+    setProcessed(true);
+  }
 
   // Compute stats from session
   const totalSetsCompleted = Object.values(session.completedSets).reduce((a, b) => a + b, 0);

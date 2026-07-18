@@ -23,7 +23,7 @@ export function NudgeBanner() {
   let displayNudge = activeNudge;
   const currentStreak = calculateStreak(weekOverview);
 
-  if (shouldShowMilestoneNudge(currentUser.joinedAt)) {
+  if (shouldShowMilestoneNudge(currentUser.joinedAt, new Date(), enabled)) {
     displayNudge = {
       id: "n_milestone",
       headline: "You hit a milestone!",
@@ -32,7 +32,7 @@ export function NudgeBanner() {
       ctaLink: "/profile",
       ts: "Just now",
     };
-  } else if (shouldShowStreakNudge(currentStreak, checkinDoneToday)) {
+  } else if (shouldShowStreakNudge(currentStreak, checkinDoneToday, enabled)) {
     displayNudge = {
       id: "n_streak",
       headline: "Keep your streak alive",

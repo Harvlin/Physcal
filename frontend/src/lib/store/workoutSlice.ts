@@ -26,6 +26,7 @@ const defaultWorkoutSession: WorkoutSessionState = {
 
   rpeLog: {},
   pausedSessionSnapshot: null,
+  recoveryCompletedAt: null,
 };
 
 export const createWorkoutSlice: StateCreator<AppState, [], [], WorkoutSliceType> = (set) => ({
@@ -300,4 +301,9 @@ export const createWorkoutSlice: StateCreator<AppState, [], [], WorkoutSliceType
         },
       };
     }),
+
+  markRecoveryComplete: () =>
+    set((s) => ({
+      workoutSession: { ...s.workoutSession, recoveryCompletedAt: new Date().toISOString() },
+    })),
 });

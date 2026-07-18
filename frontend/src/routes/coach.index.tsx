@@ -23,6 +23,7 @@ import { WorkoutCalendar, type CalendarDay } from "@/components/WorkoutCalendar"
 import { HealthConsiderationsPanel } from "@/components/HealthConsiderationsPanel";
 import { RestDayCard } from "@/components/RestDayCard";
 import { useColors } from "@/hooks/useColors";
+import { checkAndUnlockBadges } from "@/lib/progress";
 
 const calendarData: CalendarDay[] = weekOverview.map((d) => ({
   date: d.date,
@@ -146,7 +147,18 @@ function CoachPage() {
                 />
               </div>
               <button
-                onClick={() => setCheckinDone(true)}
+                onClick={() => {
+                  setCheckinDone(true);
+                  checkAndUnlockBadges("checkin_submitted", {
+                    totalSessions: useApp.getState().trainingProfile ? 5 : 0, // Mock
+                    days: weekOverview,
+                    recoveryDates: [], // Mock
+                    joinedAt: "2025-04-12",
+                    today: new Date(),
+                    eventsCreatedCount: 0,
+                    chatActionAppliedCount: 0,
+                  });
+                }}
                 disabled={!allFilled}
                 className="w-full mt-5 h-12 rounded-full font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.97]"
                 style={

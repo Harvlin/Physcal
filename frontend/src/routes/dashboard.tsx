@@ -21,7 +21,17 @@ import { useColors } from "@/hooks/useColors";
 
 import { RestDayCard } from "@/components/RestDayCard";
 
-import { currentUser, events, chatHistory, analyses, weekOverview } from "@/lib/mock-data";
+import {
+  currentUser,
+  events,
+  chatHistory,
+  analyses,
+  weekOverview,
+  checkinHistory,
+  exerciseLoadHistory,
+  bodyWeightHistory,
+} from "@/lib/mock-data";
+import { computeWeeklyReport } from "@/lib/progress";
 import { useApp } from "@/lib/store";
 import { calculateStreak } from "@/lib/utils";
 
@@ -60,13 +70,12 @@ function Dashboard() {
     setShowSummary(false);
   };
 
-  const getInsight = (count: number) => {
-    if (count === 0) return "It's a new week. Let's start fresh and get moving.";
-    if (count < 3) return "Good start last week! Let's aim for a bit more consistency this week.";
-    if (count < 5) return "Solid effort last week. Keep the momentum going, you're doing great.";
-    return "Incredible work last week! You absolutely crushed your targets.";
-  };
-  const insight = getInsight(currentUser.totalSessions % 4);
+  const { sessionsCompleted, newPRs, weightDelta, narrative } = computeWeeklyReport(
+    checkinHistory,
+    exerciseLoadHistory,
+    bodyWeightHistory,
+  );
+  const insight = narrative;
 
   const checkinDone = useApp((s) => s.checkinDoneToday);
   const lastChat = chatHistory[chatHistory.length - 1];
@@ -188,7 +197,7 @@ function Dashboard() {
                         className="text-[20px] font-black leading-none mb-1"
                         style={{ color: c.textPrimary }}
                       >
-                        {currentUser.totalSessions % 4}
+                        {sessionsCompleted}
                       </div>
                       <div
                         className="text-[10px] font-semibold uppercase tracking-wider"
@@ -202,7 +211,7 @@ function Dashboard() {
                         className="text-[20px] font-black leading-none mb-1"
                         style={{ color: c.textPrimary }}
                       >
-                        1
+                        {newPRs}
                       </div>
                       <div
                         className="text-[10px] font-semibold uppercase tracking-wider"
@@ -216,7 +225,11 @@ function Dashboard() {
                         className="text-[20px] font-black leading-none mb-1"
                         style={{ color: c.textPrimary }}
                       >
-                        -0.5
+                        {weightDelta !== null
+                          ? weightDelta > 0
+                            ? `+${weightDelta}`
+                            : weightDelta
+                          : "—"}
                       </div>
                       <div
                         className="text-[10px] font-semibold uppercase tracking-wider"

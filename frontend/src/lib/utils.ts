@@ -30,9 +30,13 @@ import type { DayStatus } from "./mock-data";
  * - A day with DayStatus === "rest" is neutral — it does NOT break the streak and does NOT increment it. Streak counting simply skips over rest days as if they weren't there.
  * - A day with DayStatus === "skipped" breaks the streak — streak count resets to 0 as of that day.
  * - A day with DayStatus === "planned" that is in the past (before today) and was never completed counts as an implicit break, equivalent to "skipped" — even if its status label wasn't explicitly updated to "skipped" in the data.
+ * - A day counts as "safe" for streak purposes if either: the main session's status is "completed", OR the user completed the recovery workout via injury-pause for that day (even if the main session wasn't completed).
  * - A day with DayStatus === "today" is not yet counted either way until the day is over / the app has a completion result for it — it should not affect the currently-displayed streak number.
  */
-export function calculateStreak(days: { day: string; status: DayStatus; date: string }[]): number {
+export function calculateStreak(
+  days: { day: string; status: DayStatus; date: string }[],
+  recoveryDates: string[] = [],
+): number {
   // Sort by date just in case, though we assume they're ordered.
   const sortedDays = [...days].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -45,7 +49,7 @@ export function calculateStreak(days: { day: string; status: DayStatus; date: st
     const d = sortedDays[i];
     if (d.status === "today") continue;
     if (d.status === "rest") continue;
-    if (d.status === "completed") {
+    if (d.status === "completed" || recoveryDates.includes(d.date)) {
       streak++;
     } else if (d.status === "skipped" || d.status === "planned") {
       // Any planned day before 'today' is implicitly skipped and breaks the streak.

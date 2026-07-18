@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
+import { checkAndUnlockBadges } from "@/lib/progress";
+import { weekOverview } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/community/create")({
   component: CreateEvent,
@@ -325,7 +327,18 @@ function CreateEvent() {
           </button>
 
           <button
-            onClick={() => navigate({ to: "/community" })}
+            onClick={() => {
+              checkAndUnlockBadges("event_created", {
+                totalSessions: 0, // Mock
+                days: weekOverview,
+                recoveryDates: [],
+                joinedAt: "2025-04-12",
+                today: new Date(),
+                eventsCreatedCount: 1, // At least 1 now
+                chatActionAppliedCount: 0,
+              });
+              navigate({ to: "/community" });
+            }}
             disabled={!name || !date || !location || !acknowledged}
             className="w-full h-[52px] rounded-full font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-30"
             style={{

@@ -1366,8 +1366,25 @@ export function deriveIntensityProfile(
   return "standard";
 }
 
-export function applyIntensityProfile(workout: Workout, profile: IntensityProfile): Workout {
-  if (profile === "standard") return workout;
+export function applyIntensityProfile(
+  workout: Workout,
+  profile: IntensityProfile,
+  weekNumber?: number,
+): Workout {
+  let effectiveProfile = profile;
+
+  // 4-week progression logic
+  if (weekNumber !== undefined) {
+    if (weekNumber === 1) {
+      effectiveProfile = "gentle"; // Week 1 is always gentler for foundation
+    } else if (weekNumber === 2 || weekNumber === 3) {
+      effectiveProfile = profile; // Return to standard/user's level
+    } else if (weekNumber >= 4) {
+      effectiveProfile = profile === "gentle" ? "standard" : "challenge"; // Week 4 ramps up
+    }
+  }
+
+  if (effectiveProfile === "standard") return workout;
 
   const adapted = {
     ...workout,
@@ -1375,7 +1392,7 @@ export function applyIntensityProfile(workout: Workout, profile: IntensityProfil
     planningNotes: [...(workout.planningNotes || [])],
   };
 
-  if (profile === "gentle") {
+  if (effectiveProfile === "gentle") {
     adapted.duration = Math.max(10, Math.floor(adapted.duration * 0.8));
     adapted.difficulty = "Adjusted";
     adapted.planningNotes!.push("Reduced volume based on your gentler intensity profile.");
@@ -1386,7 +1403,7 @@ export function applyIntensityProfile(workout: Workout, profile: IntensityProfil
       if (e.restSeconds) e.restSeconds += 15;
       return e;
     });
-  } else if (profile === "challenge") {
+  } else if (effectiveProfile === "challenge") {
     adapted.duration = Math.floor(adapted.duration * 1.2);
     adapted.difficulty = "Regular";
     adapted.planningNotes!.push("Increased volume to match your advanced intensity profile.");
@@ -1421,6 +1438,7 @@ export function generateDailyPlan(
   confidence: number | undefined,
   location: string | undefined,
   timePerWeek?: string | undefined,
+  weekNumber?: number,
 ): DailyPlanResult {
   if (isRestDay) {
     return {
@@ -1468,7 +1486,7 @@ export function generateDailyPlan(
 
   // 5. Apply intensity profile and goal modifier
   const intensityProfile = deriveIntensityProfile(fitnessLevel, confidence);
-  const finalWorkout = applyIntensityProfile(healthAdapted, intensityProfile);
+  const finalWorkout = applyIntensityProfile(healthAdapted, intensityProfile, weekNumber);
 
   const goalModifier = deriveIntensityModifier(goals);
   if (goalModifier !== 1.0) {
@@ -1507,12 +1525,22 @@ export function generateDailyPlan(
 
 // ─── Nudge Logic (Part G) ────────────────────────────────────────────
 
-export function shouldShowStreakNudge(streak: number, checkinDoneToday: boolean): boolean {
+export function shouldShowStreakNudge(
+  streak: number,
+  checkinDoneToday: boolean,
+  smartRemindersEnabled: boolean,
+): boolean {
+  if (!smartRemindersEnabled) return false;
   if (checkinDoneToday || streak === 0) return false;
   return true; // Simple mock logic: show if they have an active streak but haven't checked in
 }
 
-export function shouldShowMilestoneNudge(joinedAt: string, today: Date = new Date()): boolean {
+export function shouldShowMilestoneNudge(
+  joinedAt: string,
+  today: Date = new Date(),
+  smartRemindersEnabled: boolean,
+): boolean {
+  if (!smartRemindersEnabled) return false;
   const joinDate = new Date(joinedAt);
   const diffTime = Math.abs(today.getTime() - joinDate.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
