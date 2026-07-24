@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { ShieldAlert, ChevronDown, CheckCircle, AlertTriangle } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
+import { PhyscalAlert } from "@/components/PhyscalAlert";
 
 import { adaptWorkoutForHealthProfile, todayWorkout } from "@/lib/mock-data";
 
@@ -55,17 +56,14 @@ export function HealthConsiderationsPanel() {
           >
             <div className="px-5 pb-4" style={{ borderTop: `1px solid ${c.exuberant}1A` }}>
               {adaptationNotes.some((n) => n.type === "manual_review") && (
-                <div
-                  className="rounded-xl px-3 py-2.5 my-3 text-[12px] font-medium leading-relaxed"
-                  style={{
-                    background: c.sunGlareBg,
-                    border: `1px solid ${c.sunGlare}33`,
-                    color: c.textPrimary,
-                  }}
+                <PhyscalAlert
+                  variant="warning"
+                  icon={AlertTriangle}
+                  title="Manual review needed"
+                  className="my-3"
                 >
-                  <strong style={{ color: c.sunGlare }}>Manual review needed:</strong> One of your
-                  conditions isn't automatically adapted yet. Please exercise with care.
-                </div>
+                  One of your conditions isn't automatically adapted yet. Please exercise with care.
+                </PhyscalAlert>
               )}
               {adaptationNotes.filter((n) => n.type !== "manual_review").length > 0 && (
                 <>

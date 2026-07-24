@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { House, Dumbbell, Video, Users, User, Zap } from "lucide-react";
+import { House, Dumbbell, Video, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 import { ThemeToggle } from "./ThemeToggle";
@@ -88,7 +88,7 @@ export function SideNav() {
           className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
           style={{ background: c.sideNavBeta, border: `1px solid ${c.sideNavBetaBorder}` }}
         >
-          <Zap size={13} style={{ color: c.sideNavBetaIcon }} />
+
           <span className="text-xs font-medium" style={{ color: c.sideNavBetaText }}>
             Beta build · v0.1
           </span>

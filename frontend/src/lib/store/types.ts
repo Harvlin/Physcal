@@ -7,7 +7,6 @@ export type HealthConditionDetail = {
   avoidances: string;
 };
 
-/** Distinguishes "I confirmed I have no conditions" from "I declined to share" */
 export type HealthDisclosureStatus = "confirmed_none" | "undisclosed" | "conditions_provided";
 
 export type HealthProfile = {
@@ -16,11 +15,6 @@ export type HealthProfile = {
   disclosureStatus: HealthDisclosureStatus;
 };
 
-/**
- * Persisted training preferences collected during onboarding.
- * Survives resetOnboarding() because it lives in appSlice, not onboardingSlice.
- * HealthProfile (conditions) is kept separate — don't fold it here.
- */
 export type TrainingProfile = {
   goals: string[];
   fitnessLevel: string | undefined;
@@ -29,8 +23,6 @@ export type TrainingProfile = {
   confidence: number | undefined;
   socialPreference: string | undefined;
 };
-
-// ─── Workout Session Types ───────────────────────────────────────
 
 import type { Workout, ChatAction } from "../mock-data";
 
@@ -84,8 +76,6 @@ export type WorkoutSessionState = {
   recoveryCompletedAt: string | null;
 };
 
-// ─── Slice Types ───────────────────────────────────────────────
-
 export type AppSliceType = {
   theme: Theme;
   setTheme: (t: Theme) => void;
@@ -115,12 +105,9 @@ export type AppSliceType = {
   weightUnit: "kg" | "lbs";
   setWeightUnit: (unit: "kg" | "lbs") => void;
 
-  // ─── Consolidated Training Profile (Part G) ───────────────────
   trainingProfile: TrainingProfile | null;
   setTrainingProfile: (profile: TrainingProfile) => void;
 
-  // ─── Multi-Sport Profile (Part B) ────────────────────────────
-  /** Sports the user added on top of their primary (pickedSportId from onboarding). */
   additionalSportIds: string[];
   addSport: (sportId: string) => void;
   removeSport: (sportId: string) => void;
@@ -176,11 +163,6 @@ export type WorkoutSliceType = {
   logRpe: (exerciseId: string, rpe: number) => void;
   completeDistanceSet: (exerciseId: string, durationMin: number, distanceKm: number) => void;
 
-  /**
-   * Inserts a drill from Movement Analysis into today's plan.
-   * The inserted exercise is tagged with fromAnalysis:true so Coach screens
-   * can display a "From your analysis" origin badge.
-   */
   addDrillToPlan: (drill: { name: string; description: string }) => void;
   markRecoveryComplete: () => void;
 };

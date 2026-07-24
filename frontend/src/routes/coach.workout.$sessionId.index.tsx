@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronUp,
   Camera,
-  Zap,
   AlertTriangle,
   Clock,
   Dumbbell,
@@ -779,7 +778,6 @@ function WorkoutSession() {
                 className="h-14 w-14 rounded-full grid place-items-center shrink-0"
                 style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}
               >
-                <Zap size={18} />
               </button>
             }
           >
@@ -792,7 +790,6 @@ function WorkoutSession() {
                 style={{ border: `1.5px solid ${c.chipBorder}`, color: c.textTertiary }}
                 aria-label="Take a break"
               >
-                <Zap size={18} />
               </button>
             </InjuryPauseSheet>
           </Suspense>

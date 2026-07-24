@@ -96,7 +96,20 @@ function GoalsPage() {
                     </button>
                   );
                 })
-              : onboarding.goals.map((gid) => {
+              : onboarding.goals.length === 0 ? (
+                  <div className="w-full text-center py-4">
+                    <p className="text-sm font-medium mb-3" style={{ color: c.textSecondary }}>
+                      No goals selected yet.
+                    </p>
+                    <button
+                      onClick={() => setEditingGoals(true)}
+                      className="px-4 py-2 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                      style={{ background: c.sunGlareBg, color: c.sunGlare }}
+                    >
+                      Set your goals
+                    </button>
+                  </div>
+                ) : onboarding.goals.map((gid) => {
                   const g = goalOptions.find((x) => x.id === gid);
                   if (!g) return null;
                   return (

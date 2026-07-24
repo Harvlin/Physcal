@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { ChevronLeft, Sparkles } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { currentUser, sportRecommendations, weekOverview, type DayStatus } from "@/lib/mock-data";
 import { getInitials } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
@@ -50,7 +50,6 @@ function Reassess() {
             className="w-16 h-16 rounded-full grid place-items-center mb-6"
             style={{ background: c.violetBg, color: c.violet }}
           >
-            <Sparkles size={22} />
           </motion.div>
           <h1 className="text-4xl font-semibold mb-3">Welcome back, {currentUser.name}</h1>
           <p className="mb-6" style={{ color: c.textSecondary }}>
@@ -129,7 +128,7 @@ function Reassess() {
           className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-4"
           style={{ background: c.violetBg, color: c.violet }}
         >
-          <Sparkles size={12} /> Comparison ready
+          Comparison ready
         </div>
         <h1 className="text-3xl font-semibold mb-2">
           {result.levelChanged ? "You've evolved" : "Staying the course"}

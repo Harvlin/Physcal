@@ -10,7 +10,7 @@ import {
   Dumbbell,
   Users,
   Shield,
-  Sparkles,
+  Smile,
   Accessibility,
   Activity,
   ShieldAlert,
@@ -32,7 +32,7 @@ const goalOptions = [
   { id: "strength", label: "Build strength", icon: Dumbbell },
   { id: "social", label: "Have fun & socialize", icon: Users },
   { id: "recovery", label: "Recover from injury", icon: Shield },
-  { id: "stress", label: "Reduce stress", icon: Sparkles },
+  { id: "stress", label: "Reduce stress", icon: Smile },
 ];
 
 const fitnessLevels = ["Complete beginner", "Rarely active", "Sometimes active", "Pretty active"];

@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BadgeCard } from "@/components/BadgeCard";
 import { badges } from "@/lib/mock-data";
 import { useColors } from "@/hooks/useColors";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/profile/achievements")({
   component: AchievementsPage,
@@ -34,16 +36,32 @@ function AchievementsPage() {
             <span>Progress</span>
             <span style={{ color: c.sunGlare }}>{Math.round(pct)}%</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: c.divider }}>
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${pct}%`,
-                background: c.sunGlare,
-                boxShadow: `0 0 8px ${c.sunGlareBg}`,
-              }}
-            />
-          </div>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Progress 
+                    value={pct} 
+                    className="h-1.5" 
+                    style={{ background: c.divider }}
+                    indicatorColor={c.sunGlare}
+                    indicatorShadow={`0 0 8px ${c.sunGlareBg}`}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent 
+                sideOffset={8}
+                className="chip-on-glass rounded-xl shadow-lg border-none px-3 py-1.5 font-bold text-xs"
+                style={{ 
+                  background: c.isDark ? "rgba(40,40,38,0.95)" : "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(20px)",
+                  color: c.textPrimary
+                }}
+              >
+                {unlocked} of {badges.length} unlocked
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {badges.map((b) => (

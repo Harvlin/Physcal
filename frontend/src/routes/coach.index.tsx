@@ -3,12 +3,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  Sparkles,
   MessageCircle,
   ChevronDown,
   Check,
   Play,
-  Zap,
   Dumbbell,
   Smile,
   Target,
@@ -17,6 +15,7 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { CheckinDot } from "@/components/CheckinDot";
 import { todayWorkout, weekOverview, adaptWorkoutForHealthProfile } from "@/lib/mock-data";
+import { formatTrackingModeSummary } from "@/lib/format";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { WorkoutCalendar, type CalendarDay } from "@/components/WorkoutCalendar";
@@ -117,7 +116,6 @@ function CoachPage() {
               <div className="space-y-4">
                 <CheckinDot
                   label="Energy"
-                  icon={<Zap size={14} />}
                   value={c_state.energy}
                   onChange={(v) => setC({ ...c_state, energy: v })}
                 />
@@ -203,19 +201,14 @@ function CoachPage() {
 
               {hasManualReview && (
                 <div
-                  className="rounded-xl px-4 py-3 flex items-start gap-2 mb-3 text-[13px] font-medium"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold mb-3"
                   style={{
                     background: c.sunGlareBg,
                     border: `1px solid ${c.sunGlare}33`,
-                    color: c.textPrimary,
+                    color: c.sunGlare,
                   }}
                 >
-                  <Zap size={14} className="mt-0.5 flex-shrink-0" style={{ color: c.sunGlare }} />
-                  <div>
-                    <strong>Manual review needed:</strong> One or more of your health conditions
-                    requires careful consideration. Exercises are not automatically adjusted for
-                    these yet. Please review the health considerations panel.
-                  </div>
+                  ⚠ See health notes ↑
                 </div>
               )}
 
@@ -229,7 +222,7 @@ function CoachPage() {
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles size={14} /> Plan adjusted for you
+                    Plan adjusted for you
                   </div>
                   {plan.appliedAdjustments && plan.appliedAdjustments.length > 0 && (
                     <ul className="list-disc pl-8 space-y-0.5 opacity-90">
@@ -297,7 +290,7 @@ function CoachPage() {
                           <div
                             style={{ fontSize: "12px", color: c.textSecondary, fontWeight: 500 }}
                           >
-                            {ex.sets} sets × {ex.reps} {ex.name === "Plank" ? "sec" : "reps"}
+                            {formatTrackingModeSummary(ex)}
                           </div>
                         </div>
                         <button

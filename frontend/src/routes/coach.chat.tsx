@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ArrowUp, HeartPulse, Sparkles, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ArrowUp, HeartPulse, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { motion } from "framer-motion";
 import { ChatBubble } from "@/components/ChatBubble";
@@ -231,7 +231,7 @@ function ChatPage() {
                   >
                     {m.action.type === "adjust_volume" ? (
                       <>
-                        <Sparkles size={11} /> Apply to today's plan
+                        Apply to today's plan
                       </>
                     ) : (
                       <>

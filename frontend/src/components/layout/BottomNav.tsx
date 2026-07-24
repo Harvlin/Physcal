@@ -52,15 +52,16 @@ export function BottomNav() {
             <Link
               key={item.to}
               to={item.to}
+              aria-label={item.label}
               className={cn(
-                "relative size-10 flex items-center justify-center rounded-full transition-all duration-200",
+                "relative size-11 flex items-center justify-center rounded-full transition-all duration-200",
               )}
               style={{ color: c.navInactive }}
             >
               <Icon className="size-[18px]" strokeWidth={2} />
               {showDot && (
                 <span
-                  className="absolute top-1 right-1 size-2 rounded-full ring-2"
+                  className="absolute top-1.5 right-1.5 size-2 rounded-full ring-2"
                   style={{ background: "#F5522A" }}
                 />
               )}

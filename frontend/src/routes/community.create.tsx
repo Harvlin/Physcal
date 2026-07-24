@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Loader2, Minus, Plus, GraduationCap, Check } from "lucide-react";
+import { Loader2, Minus, Plus, GraduationCap, Check } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
@@ -297,7 +297,7 @@ function CreateEvent() {
             onMouseEnter={(e) => (e.currentTarget.style.color = c.violetLight)}
             onMouseLeave={(e) => (e.currentTarget.style.color = c.violet)}
           >
-            {generating ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
+            {generating && <Loader2 className="animate-spin" size={14} />}
             {generating ? "Generating..." : "Generate with AI"}
           </button>
         </Section>

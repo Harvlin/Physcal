@@ -8,10 +8,8 @@ import {
   Play,
   ChevronRight,
   MessageCircle,
-  Zap,
   Calendar,
   Scale,
-  Sparkles,
   X,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,14 +24,9 @@ import {
   events,
   chatHistory,
   analyses,
-  weekOverview,
-  checkinHistory,
-  exerciseLoadHistory,
-  bodyWeightHistory,
 } from "@/lib/mock-data";
-import { computeWeeklyReport } from "@/lib/progress";
 import { useApp } from "@/lib/store";
-import { calculateStreak } from "@/lib/utils";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -54,7 +47,7 @@ function getWeekNumber(d: Date) {
 
 function Dashboard() {
   const c = useColors();
-  const currentStreak = calculateStreak(weekOverview);
+  const { streak, weeklyReport, weeklyTarget } = useDashboardStats();
 
   const currentWeek = getWeekNumber(new Date());
   const summaryKey = `physcal-weekly-summary-seen-${currentWeek}`;
@@ -70,11 +63,7 @@ function Dashboard() {
     setShowSummary(false);
   };
 
-  const { sessionsCompleted, newPRs, weightDelta, narrative } = computeWeeklyReport(
-    checkinHistory,
-    exerciseLoadHistory,
-    bodyWeightHistory,
-  );
+  const { sessionsCompleted, newPRs, weightDelta, narrative } = weeklyReport;
   const insight = narrative;
 
   const checkinDone = useApp((s) => s.checkinDoneToday);
@@ -94,7 +83,7 @@ function Dashboard() {
               className="text-xs font-bold uppercase tracking-[0.18em] mb-2"
               style={{ color: c.violet }}
             >
-              Today · Nov 01
+              Today · {new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit" })}
             </p>
             <h1
               className="font-display leading-tight"
@@ -122,7 +111,7 @@ function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.07 }}
             >
-              <NudgeBanner />
+              <NudgeBanner streak={streak} />
             </motion.div>
 
             {/* 30-day milestone card */}
@@ -170,6 +159,7 @@ function Dashboard() {
                   <div className="absolute top-4 right-4">
                     <button
                       onClick={dismissSummary}
+                      aria-label="Dismiss weekly report"
                       className="transition-colors hover:scale-110 active:scale-95"
                       style={{ color: c.textTertiary }}
                     >
@@ -177,7 +167,6 @@ function Dashboard() {
                     </button>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={16} style={{ color: c.exuberant }} />
                     <span
                       className="text-[12px] font-bold uppercase tracking-[0.1em]"
                       style={{ color: c.exuberant }}
@@ -262,7 +251,7 @@ function Dashboard() {
                     className="font-black tabular leading-none whitespace-nowrap mb-2 flex items-center gap-1.5"
                     style={{ fontSize: "24px", color: c.textPrimary }}
                   >
-                    {currentStreak}d <Flame size={18} style={{ color: c.exuberant }} />
+                    {streak}d <Flame size={18} style={{ color: c.exuberant }} />
                   </div>
                   <div
                     className="uppercase tracking-wider font-semibold"
@@ -279,8 +268,7 @@ function Dashboard() {
                     className="font-black tabular leading-none whitespace-nowrap mb-2 flex items-center gap-1.5"
                     style={{ fontSize: "24px", color: c.textPrimary }}
                   >
-                    {currentUser.totalSessions % 4} /{" "}
-                    {useApp.getState().onboarding.weeklySessionTarget || 3}{" "}
+                    {sessionsCompleted} / {weeklyTarget}{" "}
                     <Calendar size={18} style={{ color: c.violet }} />
                   </div>
                   <div

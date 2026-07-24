@@ -10,15 +10,18 @@ export const Route = createFileRoute("/analysis/")({
   component: AnalysisPage,
 });
 
-const exercises = [
+import { type AnalyzableExercise } from "@/lib/mock-data";
+
+const exercises: { id: AnalyzableExercise; label: string; focus: string }[] = [
   { id: "squat", label: "Squat", focus: "Lower body" },
   { id: "pushup", label: "Push-up", focus: "Upper body" },
   { id: "lunge", label: "Lunge", focus: "Balance" },
-  { id: "plank", label: "Plank", focus: "Core stability" },
-  { id: "deadlift", label: "Deadlift", focus: "Posterior chain" },
-  { id: "overhead", label: "Overhead press", focus: "Shoulders" },
+  { id: "bridge", label: "Glute bridge", focus: "Posterior chain" },
 ];
 const lockedExercises = [
+  { id: "plank", label: "Plank" },
+  { id: "deadlift", label: "Deadlift" },
+  { id: "overhead", label: "Overhead press" },
   { id: "pullup", label: "Pull-up" },
   { id: "burpee", label: "Burpee" },
   { id: "jump-rope", label: "Jump rope" },

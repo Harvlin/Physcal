@@ -95,18 +95,19 @@ export function computeWeeklyReport(
   checkinHistory: CheckinEntry[],
   exerciseLoadHistory: { exerciseId: string; entries: ExerciseLoadEntry[] }[],
   bodyWeightHistory: BodyWeightEntry[],
+  referenceDate?: Date
 ) {
-  const now = new Date();
+  const now = referenceDate || new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // 1. Sessions Completed (derived from checkins for simplicity in this mock, assuming 1 checkin = 1 session day)
-  const recentCheckins = checkinHistory.filter((c) => new Date(c.date) >= oneWeekAgo);
+  const recentCheckins = checkinHistory.filter((c) => new Date(c.date) >= oneWeekAgo && new Date(c.date) <= now);
   const sessionsCompleted = recentCheckins.length;
 
   // 2. New PRs
   let newPRs = 0;
   exerciseLoadHistory.forEach((history) => {
-    const recentEntries = history.entries.filter((e) => new Date(e.date) >= oneWeekAgo);
+    const recentEntries = history.entries.filter((e) => new Date(e.date) >= oneWeekAgo && new Date(e.date) <= now);
     const olderEntries = history.entries.filter((e) => new Date(e.date) < oneWeekAgo);
     if (recentEntries.length > 0) {
       const maxRecent = Math.max(...recentEntries.map((e) => e.weight));
@@ -121,10 +122,11 @@ export function computeWeeklyReport(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
   if (sortedBW.length >= 2) {
-    const latest = sortedBW[0];
+    // Find latest entry within the window (up to 'now')
+    const latest = sortedBW.find((e) => new Date(e.date).getTime() <= now.getTime());
     // Find entry closest to 7 days prior
     const prior = sortedBW.find((e) => new Date(e.date).getTime() <= oneWeekAgo.getTime());
-    if (prior) {
+    if (latest && prior && latest !== prior) {
       weightDelta = Number((latest.weight - prior.weight).toFixed(1));
     }
   }

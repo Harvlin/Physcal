@@ -1,5 +1,6 @@
-import type { Badge } from "@/lib/mock-data";
+import { badgeHints, type Badge } from "@/lib/mock-data";
 import { Lock } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, getInitials } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 
@@ -55,9 +56,26 @@ export function BadgeCard({ badge, size = "md" }: { badge: Badge; size?: "sm" | 
           )}
         </>
       ) : (
-        <div className="mt-2 flex items-center gap-1 font-bold" style={{ color: c.textTertiary }}>
-          <Lock size={10} /> <span className="text-[10px] uppercase tracking-wider">Locked</span>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="mt-2 flex items-center gap-1 font-bold transition-all hover:opacity-80 focus:outline-none" style={{ color: c.textTertiary }}>
+              <Lock size={10} /> <span className="text-[10px] uppercase tracking-wider">Locked</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent 
+            sideOffset={8}
+            className="card-frosted p-3 rounded-xl shadow-lg border-none text-center"
+            style={{ 
+              background: c.isDark ? "rgba(40,40,38,0.95)" : "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(20px)",
+              maxWidth: "200px"
+            }}
+          >
+            <p className="text-xs font-medium leading-relaxed" style={{ color: c.textSecondary }}>
+              {badgeHints[badge.id] || "Keep training to unlock this badge."}
+            </p>
+          </PopoverContent>
+        </Popover>
       )}
     </div>
   );

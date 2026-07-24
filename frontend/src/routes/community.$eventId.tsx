@@ -1,10 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calendar, MapPin, Users, ChevronLeft, Sparkles, GraduationCap } from "lucide-react";
+import { Calendar, MapPin, Users, ChevronLeft, GraduationCap, Info } from "lucide-react";
 import { events } from "@/lib/mock-data";
 import { getInitials } from "@/lib/utils";
 import { useColors } from "@/hooks/useColors";
 import { useApp } from "@/lib/store";
+import { PhyscalAlert } from "@/components/PhyscalAlert";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Drawer,
   DrawerContent,
@@ -228,16 +231,38 @@ function EventDetail() {
             <span>Capacity</span>
             <span>{Math.round(ratio * 100)}%</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: c.divider }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${ratio * 100}%`,
-                background: ratio > 0.8 ? c.exuberant : c.sunGlare,
-                boxShadow: ratio > 0.8 ? `0 0 8px ${c.exuberantBg}` : `0 0 8px ${c.sunGlareBg}`,
-              }}
-            />
-          </div>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Progress
+                    value={ratio * 100}
+                    className="h-1.5"
+                    style={{ background: c.divider }}
+                    indicatorColor={ratio > 0.8 ? c.exuberant : c.sunGlare}
+                    indicatorShadow={ratio > 0.8 ? `0 0 8px ${c.exuberantBg}` : `0 0 8px ${c.sunGlareBg}`}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent 
+                sideOffset={8}
+                className="chip-on-glass rounded-xl shadow-lg border-none px-3 py-2 font-bold text-xs"
+                style={{ 
+                  background: c.isDark ? "rgba(40,40,38,0.95)" : "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(20px)",
+                  color: c.textPrimary,
+                  textAlign: "center"
+                }}
+              >
+                <div>{event.joined} confirmed</div>
+                {event.waitlistCount > 0 && (
+                  <div style={{ color: c.textSecondary, marginTop: "2px", fontWeight: 600 }}>
+                    {event.waitlistCount} on the waitlist
+                  </div>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Tags */}
@@ -309,17 +334,11 @@ function EventDetail() {
         </div>
 
         {/* Safety Disclaimer Footer */}
-        <div
-          className="text-center"
-          style={{
-            fontSize: "12px",
-            color: c.textTertiary,
-            lineHeight: 1.6,
-            padding: "16px 24px",
-          }}
-        >
-          ℹ️ Community events are organized by Physcal members, not Physcal staff. Always consult
-          your doctor before joining physical activities if you have existing health conditions.
+        <div className="mb-6">
+          <PhyscalAlert variant="info" icon={Info} title="Community Guidelines">
+            Community events are organized by Physcal members, not Physcal staff. Always consult
+            your doctor before joining physical activities if you have existing health conditions.
+          </PhyscalAlert>
         </div>
       </div>
 
@@ -360,7 +379,7 @@ function EventDetail() {
               className="flex items-center justify-center gap-2"
               style={{ color: c.textPrimary }}
             >
-              <Sparkles size={20} style={{ color: c.sunGlare }} />
+
               <span className="text-[18px] font-bold">Athena Notice</span>
             </DrawerTitle>
             <DrawerDescription className="sr-only">

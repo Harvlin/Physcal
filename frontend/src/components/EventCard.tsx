@@ -153,7 +153,7 @@ export function EventCard({ event, compact = false }: { event: EventItem; compac
                   padding: "2px 8px",
                 }}
               >
-                ✨ Perfect Match
+                Perfect Match
               </span>
             )}
             {event.safetyLevel &&
@@ -251,15 +251,14 @@ export function EventCard({ event, compact = false }: { event: EventItem; compac
                   : full
                     ? c.chipBg
                     : c.sunGlareBg,
-              border: `1px solid ${
-                event.isJoined
+              border: `1px solid ${event.isJoined
                   ? c.inputBorder
                   : event.isUserWaitlisted
                     ? `${c.violet}44`
                     : full
                       ? c.inputBorder
                       : `${c.sunGlare}44`
-              }`,
+                }`,
               color: event.isJoined
                 ? c.textPrimary
                 : event.isUserWaitlisted

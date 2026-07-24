@@ -1,18 +1,17 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, X } from "lucide-react";
+import { Flame, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   activeNudge,
-  weekOverview,
   currentUser,
   shouldShowStreakNudge,
   shouldShowMilestoneNudge,
+  Nudge,
 } from "@/lib/mock-data";
 import { useApp } from "@/lib/store";
 import { useColors } from "@/hooks/useColors";
-import { calculateStreak } from "@/lib/utils";
 
-export function NudgeBanner() {
+export function NudgeBanner({ streak }: { streak: number }) {
   const dismissed = useApp((s) => s.nudgeDismissed);
   const enabled = useApp((s) => s.smartReminders);
   const dismiss = useApp((s) => s.dismissNudge);
@@ -20,28 +19,42 @@ export function NudgeBanner() {
   const c = useColors();
 
   // Determine which nudge to show
-  let displayNudge = activeNudge;
-  const currentStreak = calculateStreak(weekOverview);
+  // priority order: health/safety (10) > streak-at-risk (20) > milestone/celebratory (30) > informational (40)
+  const candidates: { nudge: Nudge; priority: number }[] = [];
+
+  if (shouldShowStreakNudge(streak, checkinDoneToday, enabled)) {
+    candidates.push({
+      priority: 20,
+      nudge: {
+        id: "n_streak",
+        headline: "Keep your streak alive",
+        message: `You're on a ${streak}-day streak. One check-in keeps it alive.`,
+        cta: "Check in now",
+        ctaLink: "/coach",
+        ts: "Just now",
+      },
+    });
+  }
 
   if (shouldShowMilestoneNudge(currentUser.joinedAt, new Date(), enabled)) {
-    displayNudge = {
-      id: "n_milestone",
-      headline: "You hit a milestone!",
-      message: "Check your profile to see your new badge and progress.",
-      cta: "View profile",
-      ctaLink: "/profile",
-      ts: "Just now",
-    };
-  } else if (shouldShowStreakNudge(currentStreak, checkinDoneToday, enabled)) {
-    displayNudge = {
-      id: "n_streak",
-      headline: "Keep your streak alive",
-      message: `You're on a ${currentStreak}-day streak. One check-in keeps it alive.`,
-      cta: "Check in now",
-      ctaLink: "/coach",
-      ts: "Just now",
-    };
+    candidates.push({
+      priority: 30,
+      nudge: {
+        id: "n_milestone",
+        headline: "You hit a milestone!",
+        message: "Check your profile to see your new badge and progress.",
+        cta: "View profile",
+        ctaLink: "/profile",
+        ts: "Just now",
+      },
+    });
   }
+
+  candidates.push({ priority: 40, nudge: activeNudge });
+
+  // Sort by priority (lowest number first)
+  candidates.sort((a, b) => a.priority - b.priority);
+  const displayNudge = candidates[0].nudge;
 
   return (
     <AnimatePresence>
@@ -56,9 +69,9 @@ export function NudgeBanner() {
         >
           <div
             className="w-9 h-9 rounded-xl grid place-items-center shrink-0"
-            style={{ background: c.sunGlareBg, color: c.sunGlare }}
+            style={{ background: c.exuberantBg, color: c.exuberant }}
           >
-            <Zap size={16} aria-hidden="true" />
+            <Flame size={18} aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm" style={{ color: c.textPrimary }}>
@@ -68,7 +81,7 @@ export function NudgeBanner() {
               {displayNudge.message}
             </div>
             <Link
-              to={displayNudge.ctaLink}
+              to={displayNudge.ctaLink as any}
               className="inline-flex items-center gap-1 mt-3 text-[13px] font-bold transition-all"
               style={{ color: c.sunGlare }}
             >

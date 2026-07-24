@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Flame, ArrowRight, Activity, Sparkles, HeartPulse, Shield } from "lucide-react";
+import { Flame, ArrowRight, Activity, HeartPulse, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({

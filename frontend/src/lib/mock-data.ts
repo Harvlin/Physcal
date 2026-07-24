@@ -1,4 +1,4 @@
-// Mock data for the entire Athena experience
+import { formatFocusAreaList } from "./format";
 
 export type User = {
   id: string;
@@ -131,7 +131,6 @@ export const sportRecommendations: Sport[] = [
   },
 ];
 
-// ─── Goal-to-FocusArea Mapping (Part A) ─────────────────────────────────
 
 export type GoalId =
   | "health"
@@ -144,10 +143,6 @@ export type GoalId =
 
 export type GoalProfile = {
   focusAreas: FocusArea[];
-  /**
-   * 1.0 = standard, <1.0 = gentler, >1.0 = more demanding.
-   * When multiple goals are selected, the MINIMUM modifier wins — safety/gentleness always takes priority.
-   */
   intensityModifier: number;
 };
 
@@ -156,20 +151,12 @@ export const goalFocusMap: Record<GoalId, GoalProfile> = {
   weight: { focusAreas: ["cardio_endurance", "full_body_strength"], intensityModifier: 1.1 },
   gain_weight: { focusAreas: ["full_body_strength"], intensityModifier: 1.1 },
   strength: { focusAreas: ["full_body_strength"], intensityModifier: 1.15 },
-  // "social" steers Community, not exercise selection (see Part F) — no focusAreas here
+
   social: { focusAreas: [], intensityModifier: 1.0 },
   recovery: { focusAreas: ["balance_flexibility"], intensityModifier: 0.7 },
   stress: { focusAreas: ["balance_flexibility"], intensityModifier: 0.8 },
 };
 
-/**
- * Blends focus area priorities across primary sport, additional sports, and selected goals.
- * - Primary sport's focusAreaPriorities: full weight (1.0)
- * - Additional sports' focusAreaPriorities: half weight (0.5) each
- * - Selected goals' focusAreas: full weight (1.0), additive
- * Returns a deduplicated FocusArea[] ordered by combined weight, highest first.
- * Ties are broken by the primary sport's original order.
- */
 export function blendFocusPriorities(
   primarySportId: string | undefined,
   additionalSportIds: string[],
@@ -225,10 +212,7 @@ export function blendFocusPriorities(
   });
 }
 
-/**
- * Derives the effective intensity modifier for a set of selected goals.
- * Takes the MINIMUM across all selected goals — conservative/safety-first.
- */
+
 export function deriveIntensityModifier(goals: GoalId[]): number {
   if (goals.length === 0) return 1.0;
   return Math.min(...goals.map((g) => goalFocusMap[g]?.intensityModifier ?? 1.0));
@@ -663,6 +647,19 @@ export const badges: Badge[] = [
     description: "30 days in. You're building something real.",
   },
 ];
+
+export const badgeHints: Record<string, string> = {
+  "first-step": "Complete your very first session.",
+  "form-check": "Get feedback on your technique.",
+  "week-one": "Keep showing up, day after day.",
+  "consistency": "Stay steady for a couple of weeks.",
+  "community": "Find your people.",
+  "coachs-pick": "Lean on your AI coach a little more.",
+  "comeback": "Life happens — coming back counts too.",
+  "deep-dive": "Get curious about your own progress.",
+  "organizer": "Bring people together.",
+  "milestone-30": "Stick with it for a full month.",
+};
 
 export type AnalyzableExercise = "squat" | "pushup" | "lunge" | "bridge";
 
@@ -1239,7 +1236,7 @@ export function adaptWorkoutForHealthProfile(
             exerciseId: substitute.id,
             exerciseName: substitute.name,
             type: "substituted",
-            reason: `Swapped out ${ex.name} to protect your health.`,
+            reason: `${ex.name} → replaced with ${substitute.name}, to protect your health.`,
           });
         } else {
           notes.push({
@@ -1466,7 +1463,7 @@ export function generateDailyPlan(
 
   // 2. Base workout selection (Mock: just uses sport-aware generator for now)
   const baseWorkout = generateMockWorkoutForSport(primarySportId || "badminton");
-  const planningNotes: string[] = [`Focused on: ${blendedFocus.slice(0, 3).join(", ")}`];
+  const planningNotes: string[] = [`Focused on: ${formatFocusAreaList(blendedFocus.slice(0, 3))}`];
 
   // 3. Filter by location
   baseWorkout.exercises = filterExercisesByLocation(
