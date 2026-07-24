@@ -68,7 +68,7 @@ function CoachPage() {
 
   return (
     <AppShell>
-      <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto pb-32">
+      <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto pb-44 lg:pb-8">
         <div className="mb-6">
           <p
             className="text-xs font-bold uppercase tracking-[0.18em] mb-2"

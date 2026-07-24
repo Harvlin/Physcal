@@ -100,6 +100,7 @@ function ProfilePage() {
                     color: c.textPrimary,
                     boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
                   }}
+                  itemStyle={{ color: c.textSecondary }}
                 />
                 <Bar dataKey="sessions" radius={[8, 8, 0, 0]}>
                   {weeklySessions.map((entry, index) => (

@@ -264,10 +264,10 @@ function OnboardingPage() {
                         style={
                           active
                             ? {
-                                background: c.sunGlareBg,
-                                border: `1px solid ${c.sunGlare}44`,
-                                boxShadow: `0 0 24px ${c.sunGlareBg}`,
-                              }
+                              background: c.sunGlareBg,
+                              border: `1px solid ${c.sunGlare}44`,
+                              boxShadow: `0 0 24px ${c.sunGlareBg}`,
+                            }
                             : { background: c.chipBg, border: `1px solid ${c.chipBorder}` }
                         }
                       >
@@ -279,11 +279,11 @@ function OnboardingPage() {
                             active
                               ? { background: `${c.sunGlare}22`, color: c.sunGlare }
                               : {
-                                  background: c.isDark
-                                    ? "rgba(255,255,255,0.08)"
-                                    : "rgba(0,0,0,0.05)",
-                                  color: c.textSecondary,
-                                }
+                                background: c.isDark
+                                  ? "rgba(255,255,255,0.08)"
+                                  : "rgba(0,0,0,0.05)",
+                                color: c.textSecondary,
+                              }
                           }
                         >
                           <Icon size={18} />
@@ -449,7 +449,7 @@ function OnboardingPage() {
                   c={c}
                 />
                 <Pills
-                  label="How much time per week"
+                  label="How much time per week do you spend working out"
                   options={times}
                   value={onboarding.timePerWeek}
                   onChange={(v) => setOnboarding({ timePerWeek: v })}
@@ -531,11 +531,11 @@ function OnboardingPage() {
                               const next = active
                                 ? onboarding.physical.filter((x) => x !== p)
                                 : [
-                                    ...onboarding.physical.filter(
-                                      (x) => x !== "None" && x !== "Prefer not to say",
-                                    ),
-                                    p,
-                                  ];
+                                  ...onboarding.physical.filter(
+                                    (x) => x !== "None" && x !== "Prefer not to say",
+                                  ),
+                                  p,
+                                ];
                               setOnboarding({ physical: next });
                             }
                           }}
@@ -545,15 +545,15 @@ function OnboardingPage() {
                           style={
                             active
                               ? {
-                                  background: c.textPrimary,
-                                  color: c.appBg,
-                                  border: `2px solid ${c.textPrimary}`,
-                                }
+                                background: c.textPrimary,
+                                color: c.appBg,
+                                border: `2px solid ${c.textPrimary}`,
+                              }
                               : {
-                                  background: c.chipBg,
-                                  color: c.textPrimary,
-                                  border: `2px solid transparent`,
-                                }
+                                background: c.chipBg,
+                                color: c.textPrimary,
+                                border: `2px solid transparent`,
+                              }
                           }
                         >
                           {p}
@@ -695,7 +695,7 @@ function OnboardingPage() {
                           >
                             {
                               ["Foundation", "Form & flow", "Build endurance", "Test yourself"][
-                                w - 1
+                              w - 1
                               ]
                             }
                           </div>
@@ -740,16 +740,16 @@ function OnboardingPage() {
               style={
                 canContinue
                   ? {
-                      background: c.sunGlare,
-                      color: "#1C1C1A",
-                      boxShadow: `0 0 28px ${c.sunGlareBg}`,
-                    }
+                    background: c.sunGlare,
+                    color: "#1C1C1A",
+                    boxShadow: `0 0 28px ${c.sunGlareBg}`,
+                  }
                   : {
-                      background: c.chipBg,
-                      color: c.textDisabled,
-                      cursor: "not-allowed",
-                      border: `1px solid ${c.chipBorder}`,
-                    }
+                    background: c.chipBg,
+                    color: c.textDisabled,
+                    cursor: "not-allowed",
+                    border: `1px solid ${c.chipBorder}`,
+                  }
               }
             >
               {step === 3 ? "Find my sports" : "Continue"} <ChevronRight size={16} />
@@ -801,16 +801,16 @@ function Pills({
               style={
                 active
                   ? {
-                      background: c.sunGlare,
-                      color: "#1C1C1A",
-                      border: "1px solid transparent",
-                      boxShadow: `0 0 12px ${c.sunGlareBg}`,
-                    }
+                    background: c.sunGlare,
+                    color: "#1C1C1A",
+                    border: "1px solid transparent",
+                    boxShadow: `0 0 12px ${c.sunGlareBg}`,
+                  }
                   : {
-                      background: c.chipBg,
-                      border: `1px solid ${c.chipBorder}`,
-                      color: c.textSecondary,
-                    }
+                    background: c.chipBg,
+                    border: `1px solid ${c.chipBorder}`,
+                    color: c.textSecondary,
+                  }
               }
             >
               {o}
@@ -996,15 +996,15 @@ function ConditionDetailCards({
                               style={
                                 active
                                   ? {
-                                      background: c.sunGlare,
-                                      color: "#1C1C1A",
-                                      border: "1px solid transparent",
-                                    }
+                                    background: c.sunGlare,
+                                    color: "#1C1C1A",
+                                    border: "1px solid transparent",
+                                  }
                                   : {
-                                      background: c.chipBg,
-                                      border: `1px solid ${c.chipBorder}`,
-                                      color: c.textSecondary,
-                                    }
+                                    background: c.chipBg,
+                                    border: `1px solid ${c.chipBorder}`,
+                                    color: c.textSecondary,
+                                  }
                               }
                             >
                               {o}
@@ -1047,15 +1047,15 @@ function ConditionDetailCards({
                           style={
                             active
                               ? {
-                                  background: c.textPrimary,
-                                  color: c.appBg,
-                                  border: "1px solid transparent",
-                                }
+                                background: c.textPrimary,
+                                color: c.appBg,
+                                border: "1px solid transparent",
+                              }
                               : {
-                                  background: c.chipBg,
-                                  color: c.textPrimary,
-                                  border: `1px solid transparent`,
-                                }
+                                background: c.chipBg,
+                                color: c.textPrimary,
+                                border: `1px solid transparent`,
+                              }
                           }
                         >
                           {s}

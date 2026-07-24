@@ -92,7 +92,7 @@ function AnalysisPage() {
               Select one
             </span>
           </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-3">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:gap-3 after:content-[''] after:w-0.5 after:shrink-0 sm:after:hidden">
             {exercises.map((ex) => {
               const active = exercise === ex.id;
               return (
@@ -145,7 +145,7 @@ function AnalysisPage() {
           </div>
 
           {/* Locked exercises */}
-          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 mt-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:gap-3">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 mt-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:gap-3 after:content-[''] after:w-0.5 after:shrink-0 sm:after:hidden">
             {lockedExercises.map((ex) => (
               <div
                 key={ex.id}

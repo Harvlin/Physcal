@@ -104,7 +104,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
+        <div className="xl:grid xl:grid-cols-[1fr_300px] xl:gap-8">
           <div className="space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -405,7 +405,7 @@ function Dashboard() {
           </div>
 
           {/* Sidebar / Events */}
-          <div className="mt-6 lg:mt-0 lg:sticky lg:top-8">
+          <div className="mt-6 xl:mt-0 xl:sticky xl:top-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-[15px]" style={{ color: c.textPrimary }}>
                 Events near you
@@ -418,7 +418,7 @@ function Dashboard() {
                 See all <ChevronRight size={12} />
               </Link>
             </div>
-            <div className="lg:space-y-3 flex lg:flex-col gap-3 overflow-x-auto lg:overflow-visible no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+            <div className="xl:space-y-3 flex xl:flex-col gap-3 overflow-x-auto xl:overflow-visible no-scrollbar -mx-4 px-4 xl:mx-0 xl:px-0 after:content-[''] after:w-0.5 after:shrink-0 xl:after:hidden">
               {events.slice(0, 3).map((e) => (
                 <EventCard key={e.id} event={e} compact />
               ))}
