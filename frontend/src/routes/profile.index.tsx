@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronRight, Bell, RefreshCw, Scale, Target, History, X } from "lucide-react";
+import { ChevronRight, Bell, RefreshCw, Scale, Target, History, X, BookOpen } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from "recharts";
 import { AppShell } from "@/components/layout/AppShell";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
@@ -294,6 +294,18 @@ function ProfilePage() {
           <Card c={c} title="Account">
             <div className="space-y-1 text-sm" style={{ color: c.textPrimary }}>
               <Row c={c} label="Email" value="sarah@athena.app" />
+              <Link
+                to="/tutorial"
+                search={{ from: "profile" }}
+                className="flex items-center justify-between py-2 font-medium -mx-2 px-2 rounded-lg transition-colors"
+                onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen size={14} /> How Physcal Works
+                </span>
+                <ChevronRight size={14} style={{ color: c.textTertiary }} />
+              </Link>
               <button
                 className="w-full text-left py-2 font-medium -mx-2 px-2 rounded-lg transition-colors"
                 onMouseEnter={(e) => (e.currentTarget.style.background = c.hoverBg)}

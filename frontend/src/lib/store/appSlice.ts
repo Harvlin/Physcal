@@ -34,6 +34,11 @@ const _savedTheme =
     ? (localStorage.getItem("physcal-theme") as Theme | null)
     : null) ?? "dark";
 
+const _hasSeenTutorial =
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("physcal-tutorial-seen") === "true"
+    : false;
+
 /* Apply saved theme immediately before React mounts */
 if (typeof document !== "undefined") {
   document.documentElement.classList.remove("light", "dark");
@@ -130,4 +135,12 @@ export const createAppSlice: StateCreator<AppState, [], [], AppSliceType> = (set
     set((s) => ({
       additionalSportIds: s.additionalSportIds.filter((id) => id !== sportId),
     })),
+
+  hasSeenTutorial: _hasSeenTutorial,
+  setHasSeenTutorial: (seen) => {
+    set({ hasSeenTutorial: seen });
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("physcal-tutorial-seen", String(seen));
+    }
+  },
 });

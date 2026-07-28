@@ -111,6 +111,9 @@ export type AppSliceType = {
   additionalSportIds: string[];
   addSport: (sportId: string) => void;
   removeSport: (sportId: string) => void;
+
+  hasSeenTutorial: boolean;
+  setHasSeenTutorial: (seen: boolean) => void;
 };
 
 export type OnboardingSliceType = {

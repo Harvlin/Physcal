@@ -20,7 +20,8 @@ export function BottomNav() {
   if (
     location.pathname.startsWith("/coach/workout") ||
     location.pathname.startsWith("/coach/chat") ||
-    location.pathname.startsWith("/onboarding")
+    location.pathname.startsWith("/onboarding") ||
+    location.pathname.startsWith("/tutorial")
   )
     return null;
 
@@ -33,33 +34,19 @@ export function BottomNav() {
           const Icon = item.icon;
           const showDot = (item.dot === "checkin" && !checkinDone) || item.dot === "events";
 
-          if (active) {
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-full font-semibold text-[12px] transition-all"
-                style={c.navActive}
-              >
-                <Icon className="size-4 shrink-0" strokeWidth={2.5} />
-                <span className="hidden xs:inline">{item.label}</span>
-                <span className="inline xs:hidden">{item.label.slice(0, 3)}</span>
-              </Link>
-            );
-          }
-
           return (
             <Link
               key={item.to}
               to={item.to}
               aria-label={item.label}
               className={cn(
-                "relative size-11 flex items-center justify-center rounded-full transition-all duration-200",
+                "relative flex items-center justify-center rounded-full transition-all duration-200",
+                active ? "w-12 h-10" : "size-11",
               )}
-              style={{ color: c.navInactive }}
+              style={active ? c.navActive : { color: c.navInactive }}
             >
-              <Icon className="size-[18px]" strokeWidth={2} />
-              {showDot && (
+              <Icon className={cn("shrink-0", active ? "size-[18px]" : "size-[18px]")} strokeWidth={active ? 2.5 : 2} />
+              {showDot && !active && (
                 <span
                   className="absolute top-1.5 right-1.5 size-2 rounded-full ring-2"
                   style={{ background: "#F5522A" }}

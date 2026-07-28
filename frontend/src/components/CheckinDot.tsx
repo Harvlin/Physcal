@@ -11,7 +11,7 @@ export function CheckinDot({
   value: number;
   onChange: (n: number) => void;
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
 }) {
   const c = useColors();
   return (

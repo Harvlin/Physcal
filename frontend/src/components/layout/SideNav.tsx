@@ -15,7 +15,7 @@ const items = [
 export function SideNav() {
   const { location } = useRouterState();
   const c = useColors();
-  if (location.pathname.startsWith("/onboarding") || location.pathname.startsWith("/coach/workout"))
+  if (location.pathname.startsWith("/onboarding") || location.pathname.startsWith("/tutorial") || location.pathname.startsWith("/coach/workout"))
     return null;
 
   return (

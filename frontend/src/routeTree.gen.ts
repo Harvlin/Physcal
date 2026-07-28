@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TutorialRouteImport } from './routes/tutorial'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -32,6 +33,11 @@ import { Route as AnalysisResultRouteImport } from './routes/analysis.result'
 import { Route as CoachWorkoutSessionIdIndexRouteImport } from './routes/coach.workout.$sessionId.index'
 import { Route as CoachWorkoutSessionIdDoneRouteImport } from './routes/coach.workout.$sessionId.done'
 
+const TutorialRoute = TutorialRouteImport.update({
+  id: '/tutorial',
+  path: '/tutorial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/signup': typeof SignupRoute
+  '/tutorial': typeof TutorialRoute
   '/analysis/result': typeof AnalysisResultRoute
   '/coach/chat': typeof CoachChatRoute
   '/community/$eventId': typeof CommunityEventIdRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/signup': typeof SignupRoute
+  '/tutorial': typeof TutorialRoute
   '/analysis/result': typeof AnalysisResultRoute
   '/coach/chat': typeof CoachChatRoute
   '/community/$eventId': typeof CommunityEventIdRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/signup': typeof SignupRoute
+  '/tutorial': typeof TutorialRoute
   '/analysis/result': typeof AnalysisResultRoute
   '/coach/chat': typeof CoachChatRoute
   '/community/$eventId': typeof CommunityEventIdRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/tutorial'
     | '/analysis/result'
     | '/coach/chat'
     | '/community/$eventId'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/tutorial'
     | '/analysis/result'
     | '/coach/chat'
     | '/community/$eventId'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/tutorial'
     | '/analysis/result'
     | '/coach/chat'
     | '/community/$eventId'
@@ -300,6 +312,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
   SignupRoute: typeof SignupRoute
+  TutorialRoute: typeof TutorialRoute
   AnalysisResultRoute: typeof AnalysisResultRoute
   CoachChatRoute: typeof CoachChatRoute
   CommunityEventIdRoute: typeof CommunityEventIdRoute
@@ -319,6 +332,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tutorial': {
+      id: '/tutorial'
+      path: '/tutorial'
+      fullPath: '/tutorial'
+      preLoaderRoute: typeof TutorialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -495,6 +515,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRouteWithChildren,
   SignupRoute: SignupRoute,
+  TutorialRoute: TutorialRoute,
   AnalysisResultRoute: AnalysisResultRoute,
   CoachChatRoute: CoachChatRoute,
   CommunityEventIdRoute: CommunityEventIdRoute,
