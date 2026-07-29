@@ -491,14 +491,10 @@
 }
 
 .app-loading__logo {
-  width: 48px;
-  height: 48px;
+  height: 36px;
+  width: auto;
   margin: 0 auto;
-  border-radius: 14px;
-  background: #D6E800;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 0 40px rgba(214,232,0,0.5);
+  display: block;
 }
 
 .app-loading__label {

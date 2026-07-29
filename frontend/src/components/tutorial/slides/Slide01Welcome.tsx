@@ -4,17 +4,9 @@ export function Slide01Welcome() {
   const c = useColors();
   return (
     <div className="flex flex-col items-center justify-center min-h-full px-6 py-10 text-center max-w-lg mx-auto">
-      {/* Logo orb */}
-      <div
-        className="w-20 h-20 rounded-3xl grid place-items-center mb-8 text-3xl font-black"
-        style={{
-          background: c.sunGlareBg,
-          border: `1px solid ${c.sunGlare}33`,
-          color: c.sunGlare,
-          boxShadow: `0 0 40px ${c.sunGlareBg}`,
-        }}
-      >
-        P
+      {/* Logo */}
+      <div className="mb-8">
+        <img src="/favicon.png" alt="Physcal Logo" className="h-10 w-auto object-contain mx-auto" />
       </div>
 
       <p

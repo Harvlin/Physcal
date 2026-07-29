@@ -5,10 +5,11 @@ import type { ReactNode } from "react";
 import { useColors } from "@/hooks/useColors";
 
 const Logo = ({ size = 32 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <path d="M16 4 L28 28 L22 28 L16 14 L10 28 L4 28 Z" fill="currentColor" />
-    <path d="M11.5 22 L20.5 22" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-  </svg>
+  <img 
+    src="/favicon.png" 
+    alt="Physcal Logo" 
+    style={{ height: size, width: 'auto', objectFit: 'contain' }} 
+  />
 );
 
 export function AuthShell({ children }: { children: ReactNode }) {
@@ -58,11 +59,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
       </Link>
 
       <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center px-5 py-12">
-        <div className="flex items-center gap-2.5 mb-8" style={{ color: c.sunGlare }}>
-          <Logo size={26} />
-          <span className="font-bold text-xl tracking-tight" style={{ color: c.textPrimary }}>
-            Physcal
-          </span>
+        <div className="flex justify-center mb-8">
+          <Logo size={28} />
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.94, y: 12 }}

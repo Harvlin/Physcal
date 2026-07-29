@@ -23,24 +23,8 @@ export function SideNav() {
       className="glass hidden lg:flex fixed inset-y-4 left-4 w-60 flex-col px-4 py-6 z-30 rounded-[28px]"
       style={{ borderColor: "rgba(242,240,233,0.09)" }}
     >
-      <Link to="/dashboard" className="flex items-center gap-2.5 px-2 mb-8">
-        <div
-          className="w-8 h-8 grid place-items-center font-bold text-[15px] rounded-xl"
-          style={{ background: "#D6E800", color: "#1C1C1A" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
-            <path d="M16 4 L28 28 L22 28 L16 14 L10 28 L4 28 Z" fill="currentColor" />
-            <path
-              d="M11.5 22 L20.5 22"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-        <span className="text-xl font-bold tracking-tight" style={{ color: c.textPrimary }}>
-          Physcal
-        </span>
+      <Link to="/dashboard" className="flex items-center px-2 mb-8">
+        <img src="/favicon.png" alt="Physcal Logo" className="h-7 w-auto object-contain" />
       </Link>
 
       <nav className="flex-1">

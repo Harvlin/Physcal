@@ -49,9 +49,8 @@ function Header() {
       className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-5"
       style={{ mixBlendMode: "difference" }}
     >
-      <div className="flex items-center gap-2 text-white">
-        <Flame size={24} style={{ color: "#D6E800" }} />
-        <span className="font-bold text-xl tracking-tight">Physcal</span>
+      <div className="flex items-center">
+        <img src="/favicon.png" alt="Physcal Logo" className="h-6 w-auto object-contain" />
       </div>
       <div className="flex items-center gap-4">
         <Link
@@ -641,9 +640,8 @@ function Footer() {
         className="mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 font-medium"
         style={{ maxWidth: "1280px", borderTop: "1px solid rgba(0,0,0,0.1)", paddingTop: "2rem" }}
       >
-        <div className="flex items-center gap-2">
-          <Flame size={22} />
-          <span className="font-bold text-lg tracking-tight">Physcal</span>
+        <div className="flex items-center">
+          <img src="/favicon.png" alt="Physcal Logo" className="h-6 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-8" style={{ color: "rgba(0,0,0,0.55)" }}>
           {["About", "Community", "Privacy", "Contact"].map((l) => (

@@ -91,6 +91,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
       {
         rel: "stylesheet",
         href: appCss,
@@ -119,17 +121,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <div id="app-loading" className="app-loading" role="status" aria-live="polite">
           <div className="app-loading__content">
             <div className="app-loading__logo">
-              <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-                <path d="M16 4 L28 28 L22 28 L16 14 L10 28 L4 28 Z" fill="#1C1C1A" />
-                <path
-                  d="M11.5 22 L20.5 22"
-                  stroke="#1C1C1A"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <img src="/favicon.png" alt="Loading..." style={{ width: "auto", height: "100%", objectFit: "contain" }} />
             </div>
-            <div className="app-loading__label">Physcal</div>
             <div className="app-loading__bar">
               <span />
             </div>
