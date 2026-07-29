@@ -60,8 +60,7 @@ Unlike traditional apps that throw you into a workout immediately, Physcal takes
 
 ### After Onboarding
 
-- **First-time users** are routed to the **Interactive Tutorial** (`/tutorial?from=onboarding`) before landing on the Dashboard.
-- **Returning users** (who have already seen the tutorial) are routed directly to the **Dashboard**.
+- Users are routed to the **Interactive Tutorial** (`/tutorial?from=onboarding`) before landing on the Dashboard.
 
 ---
 

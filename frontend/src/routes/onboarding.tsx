@@ -651,7 +651,7 @@ function OnboardingPage() {
                       sport={sport}
                       onPick={() => {
                         setOnboarding({ pickedSportId: sport.id });
-                        navigate({ to: hasSeenTutorial ? "/dashboard" : "/tutorial", search: hasSeenTutorial ? undefined : { from: "onboarding" } }).then(() => finishOnboarding());
+                        navigate({ to: "/tutorial", search: { from: "onboarding" } }).then(() => finishOnboarding());
                       }}
                       c={c}
                     />
@@ -709,7 +709,7 @@ function OnboardingPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate({ to: hasSeenTutorial ? "/dashboard" : "/tutorial", search: hasSeenTutorial ? undefined : { from: "onboarding" } }).then(() => finishOnboarding())}
+                  onClick={() => navigate({ to: "/tutorial", search: { from: "onboarding" } }).then(() => finishOnboarding())}
                   className="text-sm underline underline-offset-4 block mx-auto transition-colors"
                   style={{ color: c.textSecondary }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = c.textPrimary)}
