@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="text-white font-sans" style={{ background: "#0A0A0A", overflowX: "clip" }}>
+    <div className="text-white font-sans" style={{ background: "#0A0A0A" }}>
       <Header />
       <HeroSection />
       <StorySection />

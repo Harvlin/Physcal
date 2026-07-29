@@ -9,7 +9,7 @@ import {
 import { calculateStreak } from "./utils";
 import { toast } from "sonner";
 
-// ─── 1. Reassessment Flow ───────────────────────────────────────────────────
+// Reassessment Flow
 
 export type SessionHistoryEntry = {
   date: string;
@@ -33,7 +33,7 @@ export function evaluateReassessment(
   // Group by ISO week (approximate by sorting and chunking into 7-day buckets for simplicity here)
   const weeks = new Map<string, number>();
   completedSessions.forEach((s) => {
-    // A simple week key based on date
+
     const d = new Date(s.date);
     const startOfYear = new Date(d.getFullYear(), 0, 1);
     const days = Math.floor((d.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
@@ -47,7 +47,6 @@ export function evaluateReassessment(
     if (count >= 2) consistentWeeks++;
   }
 
-  // Regression check (e.g., no sessions in the last 14 days if they had history)
   if (sessionHistory.length > 0) {
     const sorted = [...sessionHistory].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -89,7 +88,7 @@ export function evaluateReassessment(
   };
 }
 
-// ─── 2. Weekly Report ───────────────────────────────────────────────────────
+// Weekly Report
 
 export function computeWeeklyReport(
   checkinHistory: CheckinEntry[],
@@ -100,11 +99,9 @@ export function computeWeeklyReport(
   const now = referenceDate || new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // 1. Sessions Completed (derived from checkins for simplicity in this mock, assuming 1 checkin = 1 session day)
   const recentCheckins = checkinHistory.filter((c) => new Date(c.date) >= oneWeekAgo && new Date(c.date) <= now);
   const sessionsCompleted = recentCheckins.length;
 
-  // 2. New PRs
   let newPRs = 0;
   exerciseLoadHistory.forEach((history) => {
     const recentEntries = history.entries.filter((e) => new Date(e.date) >= oneWeekAgo && new Date(e.date) <= now);
@@ -146,7 +143,7 @@ export function computeWeeklyReport(
   return { sessionsCompleted, newPRs, weightDelta, narrative };
 }
 
-// ─── 3. Badge System ────────────────────────────────────────────────────────
+// 3. Badge System
 
 export type BadgeCheckContext = {
   totalSessions: number;
@@ -214,7 +211,7 @@ export function checkAndUnlockBadges(
   return newlyUnlocked;
 }
 
-// ─── 5. Suggested Weight ────────────────────────────────────────────────────
+// 5. Suggested Weight
 
 export function calculateSuggestedWeight(
   exerciseLoadHistory: ExerciseLoadEntry[],
